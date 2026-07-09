@@ -67,6 +67,33 @@ context with gates matching the current bus — unaffected.
 RETEST: cross-group switches (1/2→3, 1/2→INPUT, 3/4→1, INPUT→4 …) must now show
 correct labels immediately; also re-check same-group switches and plain dial edits
 for regressions (the refresh now lands one queue tick later).
+**Retested by user (2026-07-09): confirmed working.**
+
+### Post-SAVE/RECALL MIDI-channel-5 residue (user-found, 2nd C33 test) — FIXED
+Symptom: after SAVE or RECALL, obj-15 (shared channel number box → all 8 ctlouts'
+cold channel inlets) stayed at 5 regardless of the selected bus. Latent since
+Control-32. TWO defects found:
+(a) The post-recall sequence (hw dispatch + display refresh) was triggered from
+    pattrstorage's NOTIFICATION outlet (out0 → rcl-defer, copied from v16). That
+    outlet fires on store/write/read too — so SAVE ran the full 5-bus hw dispatch
+    (channel ends at 5, all buses' CCs resent), and the load-time `read` plausibly
+    dispatched MIDI on patch open (no-MIDI-on-load violation). Invisible in the
+    MIDI-less v16 prototype and the no-hardware C32 tests.
+    Fix: sequence now triggered by the two actual recall COMMAND paths — rcl-msg
+    (RECALL button) and pgrcl (incoming PC) each also feed rcl-defer; the
+    pattrstorage→rcl-defer notification wire is REMOVED. deferlow still guarantees
+    the synchronous recall completes first. SAVE/store/read now trigger nothing.
+(b) Recall's hw dispatch iterates obj-15 through 1..5 and nothing restored it —
+    even the post-recall display refresh sent the viewed bus's CCs on channel 5.
+    Fix: obj-pv33-busN-t (`t i i`) between busN and its 8 select fans: out1 (FIRST)
+    → obj-15 (channel = bus number; ctlout channel inlets are cold → no MIDI),
+    out0 (SECOND) → sel fans. Every display refresh (post-recall AND deferred
+    bus-switch) now restores the channel before any audible refresh. On plain bus
+    switches this duplicates the native obj-19→msg→obj-15 write (same value).
+RETEST: (i) SAVE on any bus — channel must NOT change, and NO MIDI dispatch at all;
+(ii) RECALL on each bus — channel must equal the viewed bus afterwards and live
+edits go out on it; (iii) patch load — confirm no MIDI burst on open (this was
+plausibly happening before via the read notification); (iv) PC-recall same as (ii).
 
 **⚠ MAX-TEST ITEMS (Control-33, in addition to any unfinished Control-32 hw items):**
 a) Console clean on load (no expr syntax errors anymore — their disappearance is

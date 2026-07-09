@@ -74,6 +74,38 @@ Builds Roland_SP404MK2_Control-33.maxpat from Control-32. Two changes:
    deferlow, and already runs in a deferred context with gates matching
    the current bus -- unaffected.)
 
+4. FIX the post-SAVE/RECALL MIDI-channel residue (user-reported in the second
+   Control-33 Max test; latent since Control-32). Symptom: after SAVE or
+   RECALL, obj-15 (the shared MIDI-channel number box feeding all 8 ctlouts)
+   is left at 5 regardless of the selected bus, so the post-recall display
+   refresh and all subsequent live edits transmit on channel 5 until the
+   user switches buses. Two distinct defects:
+
+   (a) The post-recall sequence (hw dispatch + display refresh) was
+       triggered from pattrstorage's notification outlet (out0 -> rcl-defer,
+       copied from the v16 prototype). That outlet fires on store, write,
+       and read as well as recall -- so SAVE ran the full 5-bus hardware
+       dispatch too (invisible in the MIDI-less v16, and unnoticed in the
+       no-hardware Control-32 tests), and the load-time 'read' plausibly
+       fired a dispatch on patch open, violating no-MIDI-on-load.
+       Fix: trigger the sequence from the two actual recall COMMAND paths
+       instead -- obj-pv2-rcl-msg (RECALL button) and obj-pv2-pgrcl
+       (incoming PC) each also feed rcl-defer; the pattrstorage->rcl-defer
+       notification wire is removed. deferlow already guarantees the
+       (synchronous) recall completes before the sequence runs, and the
+       message content is irrelevant (rcl-post-t is a trigger).
+
+   (b) The hw dispatch iterates obj-15 through channels 1..5 and nothing
+       restored it. Fix: obj-pv33-busN-t ('t i i') inserted between
+       obj-pv2-busN and its 8 select fans: outlet 1 (fires FIRST) writes
+       the current bus number into obj-15 (channel = bus number, matching
+       both the native obj-19 wiring and the hw dispatch; ctlout channel
+       inlets are cold, so this emits no MIDI), outlet 0 (SECOND) drives
+       the select fans. Every display refresh -- post-recall AND the
+       deferred bus-switch path -- now restores the channel before any
+       audible dial refresh (on plain bus switches this duplicates the
+       native obj-19 -> msg -> obj-15 write with the same value; harmless).
+
 Also renames the presets companion file to Control33_presets.json (read and
 write messages) to match the patch version. An existing Control32_presets.json
 can be migrated by renaming the file -- the pattrstorage format is unchanged,
@@ -212,6 +244,34 @@ for l in lines:
         remapped_bus += 1
 assert remapped_bus == 1, f'expected exactly 1 obj-12->busadd line to remap, got {remapped_bus}'
 add_line('obj-pv33-busdefer', 0, 'obj-pv2-busadd', 0)
+
+# =====================================================================
+# 6. Post-SAVE/RECALL channel residue (see header, fix 4)
+# =====================================================================
+# (a) trigger the post-recall sequence from the recall commands, not from
+#     pattrstorage's notification outlet (which also fires on store/write/read)
+before = len(lines)
+lines[:] = [l for l in lines
+            if not (l['patchline']['source'] == ['obj-pv2-pattrstorage', 0]
+                    and l['patchline']['destination'] == ['obj-pv2-rcl-defer', 0])]
+assert before - len(lines) == 1, 'expected exactly 1 pattrstorage->rcl-defer line to remove'
+add_line('obj-pv2-rcl-msg', 0, 'obj-pv2-rcl-defer', 0)
+add_line('obj-pv2-pgrcl', 0, 'obj-pv2-rcl-defer', 0)
+
+# (b) restore obj-15 (MIDI channel) to the current bus before every
+#     display refresh: busN -> t i i -> (out1 FIRST) obj-15, (out0) sel fans
+add_box({'id': 'obj-pv33-busN-t', 'maxclass': 'newobj', 'text': 't i i',
+         'numinlets': 1, 'numoutlets': 2, 'outlettype': ['', ''],
+         'patching_rect': [40.0, 3460.0, 40.0, 22.0]})
+remapped_sel = 0
+for l in lines:
+    pl = l['patchline']
+    if pl['source'] == ['obj-pv2-busN', 0] and pl['destination'][0].startswith('obj-pv2-sel-'):
+        pl['source'] = ['obj-pv33-busN-t', 0]
+        remapped_sel += 1
+assert remapped_sel == 8, f'expected 8 busN->sel lines to remap, got {remapped_sel}'
+add_line('obj-pv2-busN', 0, 'obj-pv33-busN-t', 0)
+add_line('obj-pv33-busN-t', 1, 'obj-15', 0)
 
 # =====================================================================
 with open(DST, 'w') as f:

@@ -131,7 +131,24 @@ if (('obj-12', 0), ('obj-pv33-busdefer', 0)) not in conn or \
    (('obj-pv33-busdefer', 0), ('obj-pv2-busadd', 0)) not in conn:
     errors.append('missing obj-12 -> obj-pv33-busdefer -> obj-pv2-busadd chain')
 
-# 8. presets companion-file messages must reference the Control-33 filename
+# 8. post-recall sequence must be triggered by the recall COMMANDS, never by
+#    pattrstorage's notification outlet (fires on store/write/read too), and
+#    the display refresh must restore the MIDI channel (obj-15) via busN-t
+#    before the select fans fire (post-SAVE/RECALL channel-5 residue fix)
+if (('obj-pv2-pattrstorage', 0), ('obj-pv2-rcl-defer', 0)) in conn:
+    errors.append('pattrstorage notification outlet still triggers rcl-defer '
+                  '(SAVE/read would run the hw dispatch)')
+for src in ('obj-pv2-rcl-msg', 'obj-pv2-pgrcl'):
+    if ((src, 0), ('obj-pv2-rcl-defer', 0)) not in conn:
+        errors.append(f'missing {src} -> obj-pv2-rcl-defer recall trigger')
+if (('obj-pv2-busN', 0), ('obj-pv33-busN-t', 0)) not in conn or \
+   (('obj-pv33-busN-t', 1), ('obj-15', 0)) not in conn:
+    errors.append('missing busN -> busN-t -> obj-15 channel-restore chain')
+for s, dst in conn:
+    if s[0] == 'obj-pv2-busN' and dst[0].startswith('obj-pv2-sel-'):
+        errors.append(f'busN still wired directly to {dst[0]} (bypasses channel restore)')
+
+# 9. presets companion-file messages must reference the Control-33 filename
 for bid, expected in (('obj-pv2-read-msg', 'read "Control33_presets.json"'),
                       ('obj-pv2-write-msg', 'write "Control33_presets.json"')):
     box = box_by_id.get(bid)
