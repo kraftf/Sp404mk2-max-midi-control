@@ -121,7 +121,17 @@ for bid, box in box_by_id.items():
     if t.split(' ')[0] in ('expr', 'expr~') and '?' in t:
         errors.append(f'{bid}: expr uses unsupported ternary operator: {t!r}')
 
-# 7. presets companion-file messages must reference the Control-33 filename
+# 7. bus-switch refresh must be decoupled from obj-12's same-outlet firing
+#    order: obj-12 must reach obj-pv2-busadd ONLY via the deferlow
+#    obj-pv33-busdefer (cross-group label-scramble fix)
+conn = {(tuple(l['patchline']['source']), tuple(l['patchline']['destination'])) for l in lines}
+if (('obj-12', 0), ('obj-pv2-busadd', 0)) in conn:
+    errors.append('obj-12 wired directly to obj-pv2-busadd (bus-switch refresh not deferred)')
+if (('obj-12', 0), ('obj-pv33-busdefer', 0)) not in conn or \
+   (('obj-pv33-busdefer', 0), ('obj-pv2-busadd', 0)) not in conn:
+    errors.append('missing obj-12 -> obj-pv33-busdefer -> obj-pv2-busadd chain')
+
+# 8. presets companion-file messages must reference the Control-33 filename
 for bid, expected in (('obj-pv2-read-msg', 'read "Control33_presets.json"'),
                       ('obj-pv2-write-msg', 'write "Control33_presets.json"')):
     box = box_by_id.get(bid)

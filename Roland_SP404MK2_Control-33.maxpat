@@ -76763,6 +76763,24 @@
       22.0
      ]
     }
+   },
+   {
+    "box": {
+     "id": "obj-pv33-busdefer",
+     "maxclass": "newobj",
+     "text": "deferlow",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ],
+     "patching_rect": [
+      40.0,
+      3370.0,
+      60.0,
+      22.0
+     ]
+    }
    }
   ],
   "lines": [
@@ -86641,7 +86659,7 @@
       0
      ],
      "destination": [
-      "obj-pv2-busadd",
+      "obj-pv33-busdefer",
       0
      ]
     }
@@ -90734,6 +90752,18 @@
      ],
      "destination": [
       "obj-pv33-sh-dfx5",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-pv33-busdefer",
+      0
+     ],
+     "destination": [
+      "obj-pv2-busadd",
       0
      ]
     }

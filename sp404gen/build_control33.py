@@ -47,6 +47,33 @@ Builds Roland_SP404MK2_Control-33.maxpat from Control-32. Two changes:
      outlet 0 (LAST) -> current-bus display refresh, whose effect-menu
      label rebuild reads those value stores.
 
+3. FIX the cross-group bus-switch label scramble (user-reported in the first
+   Control-33 Max test; latent since Control-32 -- nothing in this port's
+   items 1/2 touched bus switching). Symptom: switching BUS1/2 -> BUS3/4 or
+   INPUT (any cross-GROUP switch) showed wrong knob labels until the effect
+   was manually re-selected; same-group switches (1<->2, 3<->4) looked fine.
+
+   Root cause: Max fires multiple cords from one outlet right-to-left by
+   destination x, ties bottom-to-top. From obj-12 (bus select) outlet 0:
+   obj-19 (x=260, effect-menu item rebuild) fires first; then, among the
+   x=40 ties, obj-pv2-busadd (y=3400, bottom-most) fired BEFORE the five
+   gate-control selects obj-506/544/582/620/c3132 (y=362..882). So the pv2
+   display refresh injected the new bus's stored effect-menu position into
+   the five EFX gates' data inlets while the OLD bus's gate was still the
+   open one -- the position was translated through the OLD bus group's
+   position->effect mapping (busid_BUS12/BUS34/INPUT differ per group).
+   Same-group switches use the same mapping, hence no visible harm there.
+
+   Fix: insert deferlow (obj-pv33-busdefer) between obj-12 and
+   obj-pv2-busadd. The whole pv2 bus-switch refresh (pattrforward retarget +
+   shadow-driven display restore + gate injection) now runs only after
+   obj-12's ENTIRE synchronous cascade (item rebuild, gate flips, channel)
+   has completed -- deterministic, independent of box positions, and the
+   same deferlow technique the pv2 system already uses post-recall.
+   (Recall's own display refresh enters at obj-pv2-busN, below the new
+   deferlow, and already runs in a deferred context with gates matching
+   the current bus -- unaffected.)
+
 Also renames the presets companion file to Control33_presets.json (read and
 write messages) to match the patch version. An existing Control32_presets.json
 can be migrated by renaming the file -- the pattrstorage format is unchanged,
@@ -169,6 +196,22 @@ assert remapped_hw == 1, f'expected exactly 1 hw-uzi line to remap, got {remappe
 
 for n in DFX_SLOTS:
     add_line('obj-pv2-rcl-post-t', 1, f'obj-pv33-sh-dfx{n}', 0)
+
+# =====================================================================
+# 5. Bus-switch refresh must run AFTER obj-12's full synchronous cascade
+#    (see header, fix 3): obj-12 -> deferlow -> obj-pv2-busadd
+# =====================================================================
+add_box({'id': 'obj-pv33-busdefer', 'maxclass': 'newobj', 'text': 'deferlow',
+         'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [40.0, 3370.0, 60.0, 22.0]})
+remapped_bus = 0
+for l in lines:
+    pl = l['patchline']
+    if pl['source'] == ['obj-12', 0] and pl['destination'] == ['obj-pv2-busadd', 0]:
+        pl['destination'] = ['obj-pv33-busdefer', 0]
+        remapped_bus += 1
+assert remapped_bus == 1, f'expected exactly 1 obj-12->busadd line to remap, got {remapped_bus}'
+add_line('obj-pv33-busdefer', 0, 'obj-pv2-busadd', 0)
 
 # =====================================================================
 with open(DST, 'w') as f:

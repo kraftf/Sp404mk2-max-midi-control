@@ -45,6 +45,29 @@ display refresh LAST (its effect-menu label rebuild reads those values).
 Control32_presets.json can be migrated by renaming the file — format unchanged, old
 files just lack Dfx1-5 (recall then leaves the DFX menus untouched).
 
+### Cross-group bus-switch label scramble (user-found in first C33 Max test) — FIXED
+Symptom: switching BUS1/2 → BUS3/4 or INPUT (any cross-GROUP switch) showed wrong
+knob labels until the effect was manually re-selected; 1↔2 and 3↔4 were fine.
+LATENT SINCE CONTROL-32 (nothing in C33's other two changes touches bus switching) —
+the Control-32 no-hardware test pass evidently only exercised same-group switches.
+Root cause: Max fires multiple cords from one outlet right-to-left by destination x,
+ties bottom-to-top. From obj-12's outlet: obj-19 (x=260, menu item rebuild) first,
+then obj-pv2-busadd (x=40, y=3400 — bottom-most of the x=40 ties) fired BEFORE the
+five gate-control selects obj-506/544/582/620/c3132 (x=40, y=362..882). The pv2
+refresh therefore injected the new bus's stored menu position into the 5 EFX gates
+while the OLD bus's gate was still open, so it was translated through the OLD group's
+position→effect mapping (busid_BUS12/BUS34/INPUT differ per group — same-group
+switches share a mapping, which is why 1↔2/3↔4 looked correct). Re-selecting the
+effect fired obj-18 with gates by then correct, which is why that "fixed" it.
+Fix: `obj-pv33-busdefer` (deferlow) inserted between obj-12 and obj-pv2-busadd — the
+entire pv2 bus-switch refresh now runs after obj-12's whole synchronous cascade
+(item rebuild, gate flips, channel), independent of box positions. Recall's display
+refresh enters at obj-pv2-busN below the deferlow and already ran in a deferred
+context with gates matching the current bus — unaffected.
+RETEST: cross-group switches (1/2→3, 1/2→INPUT, 3/4→1, INPUT→4 …) must now show
+correct labels immediately; also re-check same-group switches and plain dial edits
+for regressions (the refresh now lands one queue tick later).
+
 **⚠ MAX-TEST ITEMS (Control-33, in addition to any unfinished Control-32 hw items):**
 a) Console clean on load (no expr syntax errors anymore — their disappearance is
    itself the ternary-fix confirmation).
