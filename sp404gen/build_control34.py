@@ -40,17 +40,25 @@ Builds Roland_SP404MK2_Control-34.maxpat from Control-33. Two new features:
      prefix is never stored -- it's recomputed as (slot - 1) every time the
      menu is rebuilt, so renaming can never desync the prefix from the slot.
    - Rebuild routine (obj-c34-rebuild-t / -uzi / -split / -minus1 /
-     -sprintf / -prependset): clears slotmenu and re-appends all 128 items
-     as "append PC<n> - <name...>", built from a proven single-specifier
-     `sprintf append PC%ld -` (same pattern as the existing
-     `sprintf send Bus%d_X` objects) plus a *dynamically re-armed* `prepend`
-     (no fixed arg; its right/cold inlet is fed the sprintf's
-     "append PC<n> -" text before its left/hot inlet receives the coll's
-     stored name, so `prepend` outputs "append PC<n> - <name...>" as one
-     message straight into slotmenu -- the literal "append" selector word
-     lives in the sprintf format string, NOT added separately, since
-     `prepend` only ever prepends whatever text it was last given).
-     Runs once on load (obj-c34-lb2) and once after every rename.
+     -sprintf): clears slotmenu and re-appends all 128 items as
+     "append PC<n> - <name...>", built with a single dual-specifier
+     `sprintf append PC%ld - %s` -- %ld (the PC number, hot/leftmost inlet)
+     and %s (the coll-stored name, cold/rightmost inlet) combined in one
+     call, standard documented Max sprintf behavior. Runs once on load
+     (obj-c34-lb2) and once after every rename.
+     (An earlier version of this routine tried to build the same message
+     from a proven single-specifier `sprintf append PC%ld -` PLUS a
+     *dynamically re-armed* `prepend` object supplying the rest -- that
+     failed in real Max testing: the console flooded with
+     `umenu: doesn't understand "Preset"`, because `prepend`'s right inlet
+     did not adopt the sprintf's multi-atom output as its new prefix the
+     way a single-word prepend argument normally works, so it silently left
+     the prefix empty and passed the coll's raw content straight through
+     unprefixed. Replaced with the single dual-specifier sprintf above,
+     which has no such intermediate hand-off to get wrong. Relatedly, the
+     coll's default values are stored as ONE atom per entry, e.g.
+     `Preset5` not `['Preset', '5']` -- `%s` substitutes exactly one atom,
+     so a 2-atom default would have silently dropped the number.)
    - Rename UI: obj-c34-nameedit (`textedit`, free text, no PC number typed
      by the user) -> obj-c34-namet (`t b b l`, right-to-left): the passed-
      through text is stored into namepack's cold inlet FIRST, then the
@@ -78,8 +86,10 @@ not the pattrstorage file).
 NOT hardware/Max tested -- see SESSION_STATE.md "Control-34" MAX-TEST ITEMS,
 in particular: the MIDI Control Input Device item list is a straight clone of
 the output-device list and will likely need re-picking on the user's machine;
-and the mixed single-specifier-sprintf + dynamically-re-armed-prepend combo
-for preset renaming has no precedent elsewhere in this codebase.
+and the dual-specifier sprintf combining %ld and %s for preset renaming has
+no precedent elsewhere in this codebase (though it replaced a `prepend`-based
+design that failed outright in real Max testing -- see the "128 PRESETS"
+section above for the full story).
 """
 import json
 import os
@@ -216,7 +226,12 @@ add_box({'id': 'obj-c34-namecoll', 'maxclass': 'newobj',
          'patching_rect': [5100.0, 4500.0, 180.0, 22.0],
          'coll_data': {
              'count': N_PRESETS,
-             'data': [{'key': n, 'value': ['Preset', str(n)]}
+             # single atom per entry, always -- sprintf's %s substitution
+             # takes exactly one value, so a 2-atom default like
+             # ['Preset', '5'] would only contribute 'Preset' and silently
+             # drop the number (textedit-typed renames are already always
+             # a single atom, spaces included, so this only affects defaults)
+             'data': [{'key': n, 'value': [f'Preset{n}']}
                       for n in range(1, N_PRESETS + 1)],
          }})
 
@@ -278,12 +293,20 @@ add_box({'id': 'obj-c34-rebuild-split', 'maxclass': 'newobj', 'text': 't i i',
 add_box({'id': 'obj-c34-rebuild-minus1', 'maxclass': 'newobj', 'text': '- 1',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
          'patching_rect': [5160.0, 4820.0, 40.0, 22.0]})
-add_box({'id': 'obj-c34-rebuild-sprintf', 'maxclass': 'newobj', 'text': 'sprintf append PC%ld -',
-         'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5160.0, 4850.0, 90.0, 22.0]})
-add_box({'id': 'obj-c34-rebuild-prependset', 'maxclass': 'newobj', 'text': 'prepend',
+# single sprintf combining BOTH the PC number and the coll-stored name in one
+# call -- standard documented Max sprintf behavior (mixing %ld and %s is
+# routine). Replaces an earlier design that tried to build this message with
+# a *dynamically re-armed* `prepend` instead: that failed in real Max testing
+# (console flooded with `umenu: doesn't understand "Preset"`) because
+# prepend's right inlet does not adopt a multi-atom message as its new
+# prefix the way a single-specifier sprintf's output was assumed to be
+# usable there -- it silently left the prefix unset and just passed the
+# coll's raw content through unprefixed. A single dual-specifier sprintf
+# has no such intermediate hand-off to get wrong.
+add_box({'id': 'obj-c34-rebuild-sprintf', 'maxclass': 'newobj',
+         'text': 'sprintf append PC%ld - %s',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5160.0, 4880.0, 90.0, 22.0]})
+         'patching_rect': [5160.0, 4850.0, 140.0, 22.0]})
 
 add_line('obj-c34-lb2', 0, 'obj-c34-rebuild-t', 0)
 add_line('obj-c34-namet', 0, 'obj-c34-rebuild-t', 0)       # LAST (rename path): kick off rebuild
@@ -292,12 +315,11 @@ add_line('obj-c34-clear-msg', 0, 'obj-pv2-slotmenu', 0)
 add_line('obj-c34-rebuild-t', 0, 'obj-c34-rebuild-uzi', 0) # SECOND: start loop
 
 add_line('obj-c34-rebuild-uzi', 2, 'obj-c34-rebuild-split', 0)  # counter 1..128
-add_line('obj-c34-rebuild-split', 1, 'obj-c34-rebuild-minus1', 0)  # FIRST: pc# path
-add_line('obj-c34-rebuild-minus1', 0, 'obj-c34-rebuild-sprintf', 0)
-add_line('obj-c34-rebuild-sprintf', 0, 'obj-c34-rebuild-prependset', 1)  # cold: sets "PC<n> -"
-add_line('obj-c34-rebuild-split', 0, 'obj-c34-namecoll', 0)     # SECOND: lookup stored name
-add_line('obj-c34-namecoll', 0, 'obj-c34-rebuild-prependset', 0)  # hot: "append PC<n> - <name>"
-add_line('obj-c34-rebuild-prependset', 0, 'obj-pv2-slotmenu', 0)
+add_line('obj-c34-rebuild-split', 1, 'obj-c34-namecoll', 0)     # FIRST: lookup stored name
+add_line('obj-c34-namecoll', 0, 'obj-c34-rebuild-sprintf', 1)   # cold: %s = name
+add_line('obj-c34-rebuild-split', 0, 'obj-c34-rebuild-minus1', 0)  # SECOND: pc# path
+add_line('obj-c34-rebuild-minus1', 0, 'obj-c34-rebuild-sprintf', 0)  # hot: %ld, triggers output
+add_line('obj-c34-rebuild-sprintf', 0, 'obj-pv2-slotmenu', 0)
 
 # restore the visible selection after the rebuild (clear wipes it)
 add_box({'id': 'obj-c34-restore-pset', 'maxclass': 'newobj', 'text': 'prepend set',

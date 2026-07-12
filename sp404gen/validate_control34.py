@@ -226,12 +226,11 @@ required_rename_chain = [
     (('obj-c34-clear-msg', 0), ('obj-pv2-slotmenu', 0)),
     (('obj-c34-rebuild-t', 0), ('obj-c34-rebuild-uzi', 0)),
     (('obj-c34-rebuild-uzi', 2), ('obj-c34-rebuild-split', 0)),
-    (('obj-c34-rebuild-split', 1), ('obj-c34-rebuild-minus1', 0)),
+    (('obj-c34-rebuild-split', 1), ('obj-c34-namecoll', 0)),
+    (('obj-c34-namecoll', 0), ('obj-c34-rebuild-sprintf', 1)),
+    (('obj-c34-rebuild-split', 0), ('obj-c34-rebuild-minus1', 0)),
     (('obj-c34-rebuild-minus1', 0), ('obj-c34-rebuild-sprintf', 0)),
-    (('obj-c34-rebuild-sprintf', 0), ('obj-c34-rebuild-prependset', 1)),
-    (('obj-c34-rebuild-split', 0), ('obj-c34-namecoll', 0)),
-    (('obj-c34-namecoll', 0), ('obj-c34-rebuild-prependset', 0)),
-    (('obj-c34-rebuild-prependset', 0), ('obj-pv2-slotmenu', 0)),
+    (('obj-c34-rebuild-sprintf', 0), ('obj-pv2-slotmenu', 0)),
     (('obj-c34-rebuild-uzi', 1), ('obj-c34-slotshadow-restore', 0)),
     (('obj-c34-slotshadow-restore', 0), ('obj-c34-restore-pset', 0)),
     (('obj-c34-restore-pset', 0), ('obj-pv2-slotmenu', 0)),
@@ -240,14 +239,30 @@ for src, dst in required_rename_chain:
     if (src, dst) not in conn:
         errors.append(f'missing rename/rebuild wire: {src} -> {dst}')
 
-# rebuild's sprintf must include the literal "append" selector -- without it,
+# rebuild's sprintf must include the literal "append" selector AND both the
+# %ld (PC number) and %s (name) specifiers in one call -- without "append",
 # every rebuilt umenu item is an unrecognized message and gets silently
 # dropped, leaving slotmenu with 0 items (the "umenu completely unresponsive"
-# bug found in the first Control-34 Max test)
+# bug found in the first Control-34 Max test); the dual-specifier form
+# replaced an earlier prepend-based design that also failed in real testing
+# (prepend's right inlet did not adopt a multi-atom message as a new prefix)
 sprintf_box = box_by_id.get('obj-c34-rebuild-sprintf')
-if sprintf_box is None or not sprintf_box['text'].startswith('sprintf append '):
-    errors.append(f'obj-c34-rebuild-sprintf: expected to start with '
-                  f'"sprintf append ", got {sprintf_box and sprintf_box["text"]!r}')
+expected_sprintf = 'sprintf append PC%ld - %s'
+if sprintf_box is None or sprintf_box['text'] != expected_sprintf:
+    errors.append(f'obj-c34-rebuild-sprintf: expected {expected_sprintf!r}, '
+                  f'got {sprintf_box and sprintf_box["text"]!r}')
+if 'obj-c34-rebuild-prependset' in box_by_id:
+    errors.append('obj-c34-rebuild-prependset should no longer exist '
+                  '(replaced by the dual-specifier sprintf)')
+
+# namecoll's default values must be exactly one atom each -- %s substitutes
+# exactly one value, so a multi-atom default like ['Preset', '5'] would
+# silently drop everything after the first atom
+if namecoll is not None:
+    for row in namecoll.get('coll_data', {}).get('data', []):
+        if len(row['value']) != 1:
+            errors.append(f'obj-c34-namecoll key {row["key"]}: value has '
+                          f'{len(row["value"])} atoms, expected exactly 1: {row["value"]!r}')
 
 # obj-c34-slotshadow (rename fetch) and obj-c34-slotshadow-restore (post-
 # rebuild selection restore) must be two DISTINCT objects, each feeding only

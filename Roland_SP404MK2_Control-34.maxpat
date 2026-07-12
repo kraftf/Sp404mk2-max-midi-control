@@ -78157,897 +78157,769 @@
        {
         "key": 1,
         "value": [
-         "Preset",
-         "1"
+         "Preset1"
         ]
        },
        {
         "key": 2,
         "value": [
-         "Preset",
-         "2"
+         "Preset2"
         ]
        },
        {
         "key": 3,
         "value": [
-         "Preset",
-         "3"
+         "Preset3"
         ]
        },
        {
         "key": 4,
         "value": [
-         "Preset",
-         "4"
+         "Preset4"
         ]
        },
        {
         "key": 5,
         "value": [
-         "Preset",
-         "5"
+         "Preset5"
         ]
        },
        {
         "key": 6,
         "value": [
-         "Preset",
-         "6"
+         "Preset6"
         ]
        },
        {
         "key": 7,
         "value": [
-         "Preset",
-         "7"
+         "Preset7"
         ]
        },
        {
         "key": 8,
         "value": [
-         "Preset",
-         "8"
+         "Preset8"
         ]
        },
        {
         "key": 9,
         "value": [
-         "Preset",
-         "9"
+         "Preset9"
         ]
        },
        {
         "key": 10,
         "value": [
-         "Preset",
-         "10"
+         "Preset10"
         ]
        },
        {
         "key": 11,
         "value": [
-         "Preset",
-         "11"
+         "Preset11"
         ]
        },
        {
         "key": 12,
         "value": [
-         "Preset",
-         "12"
+         "Preset12"
         ]
        },
        {
         "key": 13,
         "value": [
-         "Preset",
-         "13"
+         "Preset13"
         ]
        },
        {
         "key": 14,
         "value": [
-         "Preset",
-         "14"
+         "Preset14"
         ]
        },
        {
         "key": 15,
         "value": [
-         "Preset",
-         "15"
+         "Preset15"
         ]
        },
        {
         "key": 16,
         "value": [
-         "Preset",
-         "16"
+         "Preset16"
         ]
        },
        {
         "key": 17,
         "value": [
-         "Preset",
-         "17"
+         "Preset17"
         ]
        },
        {
         "key": 18,
         "value": [
-         "Preset",
-         "18"
+         "Preset18"
         ]
        },
        {
         "key": 19,
         "value": [
-         "Preset",
-         "19"
+         "Preset19"
         ]
        },
        {
         "key": 20,
         "value": [
-         "Preset",
-         "20"
+         "Preset20"
         ]
        },
        {
         "key": 21,
         "value": [
-         "Preset",
-         "21"
+         "Preset21"
         ]
        },
        {
         "key": 22,
         "value": [
-         "Preset",
-         "22"
+         "Preset22"
         ]
        },
        {
         "key": 23,
         "value": [
-         "Preset",
-         "23"
+         "Preset23"
         ]
        },
        {
         "key": 24,
         "value": [
-         "Preset",
-         "24"
+         "Preset24"
         ]
        },
        {
         "key": 25,
         "value": [
-         "Preset",
-         "25"
+         "Preset25"
         ]
        },
        {
         "key": 26,
         "value": [
-         "Preset",
-         "26"
+         "Preset26"
         ]
        },
        {
         "key": 27,
         "value": [
-         "Preset",
-         "27"
+         "Preset27"
         ]
        },
        {
         "key": 28,
         "value": [
-         "Preset",
-         "28"
+         "Preset28"
         ]
        },
        {
         "key": 29,
         "value": [
-         "Preset",
-         "29"
+         "Preset29"
         ]
        },
        {
         "key": 30,
         "value": [
-         "Preset",
-         "30"
+         "Preset30"
         ]
        },
        {
         "key": 31,
         "value": [
-         "Preset",
-         "31"
+         "Preset31"
         ]
        },
        {
         "key": 32,
         "value": [
-         "Preset",
-         "32"
+         "Preset32"
         ]
        },
        {
         "key": 33,
         "value": [
-         "Preset",
-         "33"
+         "Preset33"
         ]
        },
        {
         "key": 34,
         "value": [
-         "Preset",
-         "34"
+         "Preset34"
         ]
        },
        {
         "key": 35,
         "value": [
-         "Preset",
-         "35"
+         "Preset35"
         ]
        },
        {
         "key": 36,
         "value": [
-         "Preset",
-         "36"
+         "Preset36"
         ]
        },
        {
         "key": 37,
         "value": [
-         "Preset",
-         "37"
+         "Preset37"
         ]
        },
        {
         "key": 38,
         "value": [
-         "Preset",
-         "38"
+         "Preset38"
         ]
        },
        {
         "key": 39,
         "value": [
-         "Preset",
-         "39"
+         "Preset39"
         ]
        },
        {
         "key": 40,
         "value": [
-         "Preset",
-         "40"
+         "Preset40"
         ]
        },
        {
         "key": 41,
         "value": [
-         "Preset",
-         "41"
+         "Preset41"
         ]
        },
        {
         "key": 42,
         "value": [
-         "Preset",
-         "42"
+         "Preset42"
         ]
        },
        {
         "key": 43,
         "value": [
-         "Preset",
-         "43"
+         "Preset43"
         ]
        },
        {
         "key": 44,
         "value": [
-         "Preset",
-         "44"
+         "Preset44"
         ]
        },
        {
         "key": 45,
         "value": [
-         "Preset",
-         "45"
+         "Preset45"
         ]
        },
        {
         "key": 46,
         "value": [
-         "Preset",
-         "46"
+         "Preset46"
         ]
        },
        {
         "key": 47,
         "value": [
-         "Preset",
-         "47"
+         "Preset47"
         ]
        },
        {
         "key": 48,
         "value": [
-         "Preset",
-         "48"
+         "Preset48"
         ]
        },
        {
         "key": 49,
         "value": [
-         "Preset",
-         "49"
+         "Preset49"
         ]
        },
        {
         "key": 50,
         "value": [
-         "Preset",
-         "50"
+         "Preset50"
         ]
        },
        {
         "key": 51,
         "value": [
-         "Preset",
-         "51"
+         "Preset51"
         ]
        },
        {
         "key": 52,
         "value": [
-         "Preset",
-         "52"
+         "Preset52"
         ]
        },
        {
         "key": 53,
         "value": [
-         "Preset",
-         "53"
+         "Preset53"
         ]
        },
        {
         "key": 54,
         "value": [
-         "Preset",
-         "54"
+         "Preset54"
         ]
        },
        {
         "key": 55,
         "value": [
-         "Preset",
-         "55"
+         "Preset55"
         ]
        },
        {
         "key": 56,
         "value": [
-         "Preset",
-         "56"
+         "Preset56"
         ]
        },
        {
         "key": 57,
         "value": [
-         "Preset",
-         "57"
+         "Preset57"
         ]
        },
        {
         "key": 58,
         "value": [
-         "Preset",
-         "58"
+         "Preset58"
         ]
        },
        {
         "key": 59,
         "value": [
-         "Preset",
-         "59"
+         "Preset59"
         ]
        },
        {
         "key": 60,
         "value": [
-         "Preset",
-         "60"
+         "Preset60"
         ]
        },
        {
         "key": 61,
         "value": [
-         "Preset",
-         "61"
+         "Preset61"
         ]
        },
        {
         "key": 62,
         "value": [
-         "Preset",
-         "62"
+         "Preset62"
         ]
        },
        {
         "key": 63,
         "value": [
-         "Preset",
-         "63"
+         "Preset63"
         ]
        },
        {
         "key": 64,
         "value": [
-         "Preset",
-         "64"
+         "Preset64"
         ]
        },
        {
         "key": 65,
         "value": [
-         "Preset",
-         "65"
+         "Preset65"
         ]
        },
        {
         "key": 66,
         "value": [
-         "Preset",
-         "66"
+         "Preset66"
         ]
        },
        {
         "key": 67,
         "value": [
-         "Preset",
-         "67"
+         "Preset67"
         ]
        },
        {
         "key": 68,
         "value": [
-         "Preset",
-         "68"
+         "Preset68"
         ]
        },
        {
         "key": 69,
         "value": [
-         "Preset",
-         "69"
+         "Preset69"
         ]
        },
        {
         "key": 70,
         "value": [
-         "Preset",
-         "70"
+         "Preset70"
         ]
        },
        {
         "key": 71,
         "value": [
-         "Preset",
-         "71"
+         "Preset71"
         ]
        },
        {
         "key": 72,
         "value": [
-         "Preset",
-         "72"
+         "Preset72"
         ]
        },
        {
         "key": 73,
         "value": [
-         "Preset",
-         "73"
+         "Preset73"
         ]
        },
        {
         "key": 74,
         "value": [
-         "Preset",
-         "74"
+         "Preset74"
         ]
        },
        {
         "key": 75,
         "value": [
-         "Preset",
-         "75"
+         "Preset75"
         ]
        },
        {
         "key": 76,
         "value": [
-         "Preset",
-         "76"
+         "Preset76"
         ]
        },
        {
         "key": 77,
         "value": [
-         "Preset",
-         "77"
+         "Preset77"
         ]
        },
        {
         "key": 78,
         "value": [
-         "Preset",
-         "78"
+         "Preset78"
         ]
        },
        {
         "key": 79,
         "value": [
-         "Preset",
-         "79"
+         "Preset79"
         ]
        },
        {
         "key": 80,
         "value": [
-         "Preset",
-         "80"
+         "Preset80"
         ]
        },
        {
         "key": 81,
         "value": [
-         "Preset",
-         "81"
+         "Preset81"
         ]
        },
        {
         "key": 82,
         "value": [
-         "Preset",
-         "82"
+         "Preset82"
         ]
        },
        {
         "key": 83,
         "value": [
-         "Preset",
-         "83"
+         "Preset83"
         ]
        },
        {
         "key": 84,
         "value": [
-         "Preset",
-         "84"
+         "Preset84"
         ]
        },
        {
         "key": 85,
         "value": [
-         "Preset",
-         "85"
+         "Preset85"
         ]
        },
        {
         "key": 86,
         "value": [
-         "Preset",
-         "86"
+         "Preset86"
         ]
        },
        {
         "key": 87,
         "value": [
-         "Preset",
-         "87"
+         "Preset87"
         ]
        },
        {
         "key": 88,
         "value": [
-         "Preset",
-         "88"
+         "Preset88"
         ]
        },
        {
         "key": 89,
         "value": [
-         "Preset",
-         "89"
+         "Preset89"
         ]
        },
        {
         "key": 90,
         "value": [
-         "Preset",
-         "90"
+         "Preset90"
         ]
        },
        {
         "key": 91,
         "value": [
-         "Preset",
-         "91"
+         "Preset91"
         ]
        },
        {
         "key": 92,
         "value": [
-         "Preset",
-         "92"
+         "Preset92"
         ]
        },
        {
         "key": 93,
         "value": [
-         "Preset",
-         "93"
+         "Preset93"
         ]
        },
        {
         "key": 94,
         "value": [
-         "Preset",
-         "94"
+         "Preset94"
         ]
        },
        {
         "key": 95,
         "value": [
-         "Preset",
-         "95"
+         "Preset95"
         ]
        },
        {
         "key": 96,
         "value": [
-         "Preset",
-         "96"
+         "Preset96"
         ]
        },
        {
         "key": 97,
         "value": [
-         "Preset",
-         "97"
+         "Preset97"
         ]
        },
        {
         "key": 98,
         "value": [
-         "Preset",
-         "98"
+         "Preset98"
         ]
        },
        {
         "key": 99,
         "value": [
-         "Preset",
-         "99"
+         "Preset99"
         ]
        },
        {
         "key": 100,
         "value": [
-         "Preset",
-         "100"
+         "Preset100"
         ]
        },
        {
         "key": 101,
         "value": [
-         "Preset",
-         "101"
+         "Preset101"
         ]
        },
        {
         "key": 102,
         "value": [
-         "Preset",
-         "102"
+         "Preset102"
         ]
        },
        {
         "key": 103,
         "value": [
-         "Preset",
-         "103"
+         "Preset103"
         ]
        },
        {
         "key": 104,
         "value": [
-         "Preset",
-         "104"
+         "Preset104"
         ]
        },
        {
         "key": 105,
         "value": [
-         "Preset",
-         "105"
+         "Preset105"
         ]
        },
        {
         "key": 106,
         "value": [
-         "Preset",
-         "106"
+         "Preset106"
         ]
        },
        {
         "key": 107,
         "value": [
-         "Preset",
-         "107"
+         "Preset107"
         ]
        },
        {
         "key": 108,
         "value": [
-         "Preset",
-         "108"
+         "Preset108"
         ]
        },
        {
         "key": 109,
         "value": [
-         "Preset",
-         "109"
+         "Preset109"
         ]
        },
        {
         "key": 110,
         "value": [
-         "Preset",
-         "110"
+         "Preset110"
         ]
        },
        {
         "key": 111,
         "value": [
-         "Preset",
-         "111"
+         "Preset111"
         ]
        },
        {
         "key": 112,
         "value": [
-         "Preset",
-         "112"
+         "Preset112"
         ]
        },
        {
         "key": 113,
         "value": [
-         "Preset",
-         "113"
+         "Preset113"
         ]
        },
        {
         "key": 114,
         "value": [
-         "Preset",
-         "114"
+         "Preset114"
         ]
        },
        {
         "key": 115,
         "value": [
-         "Preset",
-         "115"
+         "Preset115"
         ]
        },
        {
         "key": 116,
         "value": [
-         "Preset",
-         "116"
+         "Preset116"
         ]
        },
        {
         "key": 117,
         "value": [
-         "Preset",
-         "117"
+         "Preset117"
         ]
        },
        {
         "key": 118,
         "value": [
-         "Preset",
-         "118"
+         "Preset118"
         ]
        },
        {
         "key": 119,
         "value": [
-         "Preset",
-         "119"
+         "Preset119"
         ]
        },
        {
         "key": 120,
         "value": [
-         "Preset",
-         "120"
+         "Preset120"
         ]
        },
        {
         "key": 121,
         "value": [
-         "Preset",
-         "121"
+         "Preset121"
         ]
        },
        {
         "key": 122,
         "value": [
-         "Preset",
-         "122"
+         "Preset122"
         ]
        },
        {
         "key": 123,
         "value": [
-         "Preset",
-         "123"
+         "Preset123"
         ]
        },
        {
         "key": 124,
         "value": [
-         "Preset",
-         "124"
+         "Preset124"
         ]
        },
        {
         "key": 125,
         "value": [
-         "Preset",
-         "125"
+         "Preset125"
         ]
        },
        {
         "key": 126,
         "value": [
-         "Preset",
-         "126"
+         "Preset126"
         ]
        },
        {
         "key": 127,
         "value": [
-         "Preset",
-         "127"
+         "Preset127"
         ]
        },
        {
         "key": 128,
         "value": [
-         "Preset",
-         "128"
+         "Preset128"
         ]
        }
       ]
@@ -79299,25 +79171,7 @@
     "box": {
      "id": "obj-c34-rebuild-sprintf",
      "maxclass": "newobj",
-     "text": "sprintf append PC%ld -",
-     "numinlets": 1,
-     "numoutlets": 1,
-     "outlettype": [
-      ""
-     ],
-     "patching_rect": [
-      5160.0,
-      4850.0,
-      90.0,
-      22.0
-     ]
-    }
-   },
-   {
-    "box": {
-     "id": "obj-c34-rebuild-prependset",
-     "maxclass": "newobj",
-     "text": "prepend",
+     "text": "sprintf append PC%ld - %s",
      "numinlets": 2,
      "numoutlets": 1,
      "outlettype": [
@@ -79325,8 +79179,8 @@
      ],
      "patching_rect": [
       5160.0,
-      4880.0,
-      90.0,
+      4850.0,
+      140.0,
       22.0
      ]
     }
@@ -94254,7 +94108,7 @@
       1
      ],
      "destination": [
-      "obj-c34-rebuild-minus1",
+      "obj-c34-namecoll",
       0
      ]
     }
@@ -94262,23 +94116,11 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-rebuild-minus1",
+      "obj-c34-namecoll",
       0
      ],
      "destination": [
       "obj-c34-rebuild-sprintf",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-rebuild-sprintf",
-      0
-     ],
-     "destination": [
-      "obj-c34-rebuild-prependset",
       1
      ]
     }
@@ -94290,7 +94132,7 @@
       0
      ],
      "destination": [
-      "obj-c34-namecoll",
+      "obj-c34-rebuild-minus1",
       0
      ]
     }
@@ -94298,11 +94140,11 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-namecoll",
+      "obj-c34-rebuild-minus1",
       0
      ],
      "destination": [
-      "obj-c34-rebuild-prependset",
+      "obj-c34-rebuild-sprintf",
       0
      ]
     }
@@ -94310,7 +94152,7 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-rebuild-prependset",
+      "obj-c34-rebuild-sprintf",
       0
      ],
      "destination": [
