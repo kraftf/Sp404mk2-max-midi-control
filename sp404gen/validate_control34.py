@@ -215,6 +215,23 @@ else:
     keys = {row['key'] for row in cd.get('data', [])}
     if keys != set(range(1, 129)):
         errors.append('obj-c34-namecoll: keys are not exactly 1..128')
+
+# uzi's args are <repetitions> <base>, not <repetitions> <outlet-index> -- a
+# base value other than the implicit default of 1 would shift the counter
+# away from matching namecoll's 1-128 keys (the "starts at PC2, ends at
+# PC129" bug found in Max testing)
+uzi_box = box_by_id.get('obj-c34-rebuild-uzi')
+if uzi_box is None or uzi_box['text'] != 'uzi 128':
+    errors.append(f'obj-c34-rebuild-uzi: expected "uzi 128" (base defaults to 1), '
+                  f'got {uzi_box and uzi_box["text"]!r}')
+
+# textedit defaults to keymode 0, where Return never outputs anything -- the
+# whole rename chain would never fire without keymode 1 (the "renaming
+# doesn't work" bug found in the same Max test)
+nameedit_box = box_by_id.get('obj-c34-nameedit')
+if nameedit_box is None or nameedit_box.get('keymode') != 1:
+    errors.append(f'obj-c34-nameedit: expected keymode=1, got '
+                  f'{nameedit_box and nameedit_box.get("keymode")!r}')
 required_rename_chain = [
     (('obj-c34-nameedit', 0), ('obj-c34-namet', 0)),
     (('obj-c34-namet', 2), ('obj-c34-namepack', 1)),

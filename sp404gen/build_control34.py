@@ -255,6 +255,12 @@ add_box({'id': 'obj-c34-name-cmt', 'maxclass': 'comment',
          'patching_rect': [5100.0, 4580.0, 400.0, 20.0]})
 add_box({'id': 'obj-c34-nameedit', 'maxclass': 'textedit',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
+         # keymode 1: without it (the default, keymode 0) Return just inserts
+         # a line break and NEVER outputs anything -- the whole rename chain
+         # would never fire. Confirmed against Max's own textedit reference:
+         # "keymode 1 causes the carriage return to output the entire
+         # contents of the current buffer" (keymode 0 does not).
+         'keymode': 1,
          'patching_rect': [5100.0, 4600.0, 200.0, 22.0],
          'presentation': 1, 'presentation_rect': [750.0, 140.0, 240.0, 22.0]})
 add_box({'id': 'obj-c34-namet', 'maxclass': 'newobj', 'text': 't b b l',
@@ -284,7 +290,13 @@ add_box({'id': 'obj-c34-rebuild-t', 'maxclass': 'newobj', 'text': 't b b',
 add_box({'id': 'obj-c34-clear-msg', 'maxclass': 'message', 'text': 'clear',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5100.0, 4760.0, 50.0, 20.0]})
-add_box({'id': 'obj-c34-rebuild-uzi', 'maxclass': 'newobj', 'text': 'uzi 128 3',
+# uzi's args are <repetitions> <base>, NOT <repetitions> <outlet-index> --
+# there is no "which outlet" argument, the right outlet always carries the
+# counter regardless. "uzi 128 3" was misread as "counter on outlet 3" but
+# actually means "counter starting at 3", i.e. it counts 3..130, not 1..128
+# (confirmed against Max's own uzi reference). Omitting the second argument
+# defaults the base to 1, which is what's actually needed here.
+add_box({'id': 'obj-c34-rebuild-uzi', 'maxclass': 'newobj', 'text': 'uzi 128',
          'numinlets': 2, 'numoutlets': 3, 'outlettype': ['bang', 'bang', 'int'],
          'patching_rect': [5160.0, 4760.0, 70.0, 22.0]})
 add_box({'id': 'obj-c34-rebuild-split', 'maxclass': 'newobj', 'text': 't i i',

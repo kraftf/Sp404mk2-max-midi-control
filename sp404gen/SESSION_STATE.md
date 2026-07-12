@@ -11,13 +11,18 @@ MIDI Control Input (external CC control of the 8 hardware-facing controls) and e
 the preset system to 128 slots (full PC range) with per-preset renaming — see
 "Control-34" section below.
 User-tested in Max (2026-07-12): MIDI Control Input confirmed working first try (only
-the mapped dial moves, only that one CC is sent). The 128-preset/rename system took TWO
-rounds to get working: first broken (empty umenu, missing `append` selector in the
-rebuild's sprintf), fixed, retested — still broken (a `prepend`-based part of that same
-fix didn't work the way assumed), fixed again by removing `prepend` entirely in favor of
-a single dual-specifier sprintf. See "Rebuild bug found in first Control-34 Max test" and
-"Second rebuild bug found on retest, fixed same session — prepend abandoned" below.
-NOT yet retested after this second fix.
+the mapped dial moves, only that one CC is sent). The 128-preset/rename system took FOUR
+rounds to get fully working: (1) empty/unresponsive umenu — missing `append` selector in
+the rebuild's sprintf; (2) still broken — a `prepend`-based part of that same fix didn't
+adopt its dynamic prefix the way assumed, replaced with a single dual-specifier sprintf;
+(3) items all shown but numbered wrong (started "PC2 - Preset 3", ended
+"PC129 - Preset 128") — `uzi 128 3`'s "3" was misread as an outlet selector when it's
+actually the counter's starting value, so it counted 3..130 instead of 1..128; (4)
+renaming did nothing at all — `textedit` defaults to `keymode 0`, where Return never
+outputs anything. Bugs 3 and 4 were root-caused by looking up Max's own `uzi`/`textedit`
+reference documentation instead of guessing, after two guess-based rounds (1 and 2) had
+each only partially fixed things. See the "Control-34" section below for the full
+sequence. NOT yet retested after this fourth fix.
 NOT YET tested: with real SP-404 MK2 hardware attached (per-bus MIDI channel dispatch,
 PC 0-7 recall to the actual unit — now PC 0-127).
 
@@ -197,6 +202,52 @@ single atom.
 RETEST: same as above (umenu must show all 128 items and be selectable; SAVE/RECALL must
 work; renaming must work and show "PC<n> - <name>" immediately) — this is the third
 attempt at the same test, unverified until confirmed in Max.
+
+### Third and fourth bugs found on retest, fixed same session — root-caused via docs, not guessing
+User retested: (1) all 128 items now show and are selectable, but numbering was shifted —
+started at "PC2 - Preset 3", ended at "PC129 - Preset 128"; (2) SAVE/RECALL confirmed
+working; (3) renaming still did nothing at all.
+
+This time, instead of guessing again, looked up Max's own `uzi` and `textedit` reference
+documentation (docs.cycling74.com, via web search) before touching code. Both remaining
+bugs turned out to be misunderstandings of documented object behavior, not timing/ordering
+issues like the first two:
+
+**Bug 3 — `uzi`'s second argument is a counter BASE VALUE, not an outlet selector.**
+`obj-c34-rebuild-uzi` was built as `uzi 128 3`, intended as "128 repetitions, counter on
+the 3rd outlet". That's not what the argument means: uzi's outlets are always exactly
+[bang-repeat, done-bang, counter] regardless of arguments (docs: "the uzi object has
+three outlets"); the actual syntax is `uzi <repetitions> <base>`, where the OPTIONAL
+second argument sets the STARTING VALUE the counter counts from (default 1). `uzi 128 3`
+therefore counted 3,4,...,130 (128 values) instead of 1,2,...,128 — exactly matching the
+reported shift: first entry from counter=3 (PC=2, namecoll(3)="Preset3"), last entry from
+counter=130, whose PC number computes to 129 but whose namecoll lookup (key 130, past the
+128 valid keys) fails and silently leaves the cold %s inlet holding the last successful
+lookup's value ("Preset128" from counter=128) — reproducing "PC129 - Preset128" exactly.
+Fix: `uzi 128` (no second argument, defaults the base to 1).
+Note: this is a mistake specific to writing NEW code with the wrong mental model of the
+argument — not something inherited from Control-32/33's existing `obj-pv2-hw-uzi`, which
+was re-checked and is simply `uzi 5` (correct, no base argument) despite an earlier,
+mistaken debugging note in this session claiming otherwise (misread the debug print's own
+`numoutlets` field as part of the object's text).
+
+**Bug 4 — `textedit` defaults to `keymode 0`, where Return never outputs anything.**
+`obj-c34-nameedit` was created with no attributes at all. Per Max's textedit reference,
+`keymode 0` (the default) treats Return as a normal line break with NO output; only
+`keymode 1` makes Return "output the entire contents of the current buffer". Without it,
+the entire rename chain (`namet` → `namepack` → `namecoll` → rebuild) could never fire no
+matter what the user typed — this fully explains "renaming doesn't work" as a totally
+separate bug from bug 3 above (unrelated to the uzi/numbering issue).
+Fix: added `keymode: 1` to `obj-c34-nameedit`'s box definition.
+
+Both fixes are minimal, single-field changes (`build_control34.py` diff: `obj-c34-rebuild-
+uzi` text `'uzi 128 3'` → `'uzi 128'`; `obj-c34-nameedit` gains `keymode: 1`; nothing else
+changed). `validate_control34.py` now asserts both.
+RETEST: (i) menu must read "PC0 - Preset 1" through "PC127 - Preset 128", in order, no
+stale/duplicated trailing names; (ii) SAVE/RECALL (already confirmed, shouldn't have
+changed); (iii) select a preset, type a name, press Enter/Return — the menu should
+immediately show "PC<n> - <name>" with the same slot still selected. This is the fourth
+attempt at this specific test.
 
 ## 33: SYNC-expr ternary fix + DFX slots into presets
 Generated by `sp404gen/build_control33.py` (from Control-32); structurally validated by

@@ -78984,6 +78984,7 @@
      "outlettype": [
       ""
      ],
+     "keymode": 1,
      "patching_rect": [
       5100.0,
       4600.0,
@@ -79114,7 +79115,7 @@
     "box": {
      "id": "obj-c34-rebuild-uzi",
      "maxclass": "newobj",
-     "text": "uzi 128 3",
+     "text": "uzi 128",
      "numinlets": 2,
      "numoutlets": 3,
      "outlettype": [
