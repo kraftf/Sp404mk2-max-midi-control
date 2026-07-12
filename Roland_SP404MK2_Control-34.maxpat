@@ -79074,6 +79074,24 @@
    },
    {
     "box": {
+     "id": "obj-c34-slotshadow-restore",
+     "maxclass": "newobj",
+     "text": "int 0",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      "int"
+     ],
+     "patching_rect": [
+      5100.0,
+      4570.0,
+      50.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
      "id": "obj-c34-name-cmt",
      "maxclass": "comment",
      "text": "Rename selected preset (type name, press Enter/Tab) -- PC number prefix is automatic",
@@ -79281,7 +79299,7 @@
     "box": {
      "id": "obj-c34-rebuild-sprintf",
      "maxclass": "newobj",
-     "text": "sprintf PC%ld -",
+     "text": "sprintf append PC%ld -",
      "numinlets": 1,
      "numoutlets": 1,
      "outlettype": [
@@ -94076,6 +94094,18 @@
    {
     "patchline": {
      "source": [
+      "obj-pv2-slotmenu",
+      0
+     ],
+     "destination": [
+      "obj-c34-slotshadow-restore",
+      1
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
       "obj-c34-nameedit",
       0
      ],
@@ -94296,7 +94326,7 @@
       1
      ],
      "destination": [
-      "obj-c34-slotshadow",
+      "obj-c34-slotshadow-restore",
       0
      ]
     }
@@ -94304,7 +94334,7 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-slotshadow",
+      "obj-c34-slotshadow-restore",
       0
      ],
      "destination": [

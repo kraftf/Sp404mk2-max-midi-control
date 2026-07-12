@@ -6,13 +6,15 @@ system with pattrstorage/pattrforward and passed all no-hardware Max tests. Cont
 added the 5 DFX slot assignments to the preset system, and fixed two Max-test-found bugs
 (cross-group bus-switch label scramble; post-SAVE/RECALL MIDI-channel-5 residue) — ALL
 FOUR retested and confirmed working by the user in Max (2026-07-12, no hardware).
-Roland_SP404MK2_Control-34.maxpat (778 objects, 1240 lines) builds on Control-33: adds
+Roland_SP404MK2_Control-34.maxpat (779 objects, 1241 lines) builds on Control-33: adds
 MIDI Control Input (external CC control of the 8 hardware-facing controls) and expands
 the preset system to 128 slots (full PC range) with per-preset renaming — see
-"Control-34" section below. NOT yet opened in Max at all (structural validation only) —
-this version has the least real-world precedent of anything built this session (a novel
-`textedit`-based rename UI and a `ctlin`/comparator/gate input chain with zero prior
-usage anywhere else in this codebase), so expect a longer bug-fix cycle than usual.
+"Control-34" section below.
+User-tested in Max (2026-07-12): MIDI Control Input confirmed working first try (only
+the mapped dial moves, only that one CC is sent). The 128-preset/rename system was
+COMPLETELY BROKEN on that same test (umenu unresponsive, nothing selectable, SAVE/RECALL
+did nothing) — root-caused and fixed same session, see "Rebuild bug found in first
+Control-34 Max test" below. NOT yet retested after the fix.
 NOT YET tested: with real SP-404 MK2 hardware attached (per-bus MIDI channel dispatch,
 PC 0-7 recall to the actual unit — now PC 0-127).
 
@@ -114,6 +116,48 @@ d) Renaming: select a preset, type a name in the textedit, press Enter — confi
    itself, independent of Control34_presets.json). Try renaming while a DIFFERENT preset
    is selected than the one just recalled/saved, to make sure the slot being renamed is
    always the one shown in the menu, not some other cached slot.
+
+### Rebuild bug found in first Control-34 Max test, fixed same session
+User-reported symptoms: MIDI Control Input worked correctly first try (item (b) above,
+confirmed). The 128-preset system was completely broken: the slotmenu umenu was
+unresponsive with nothing selectable, and SAVE/RECALL did nothing (so renaming, item (d),
+couldn't even be attempted).
+
+Root cause (one bug, both symptoms): `obj-c34-rebuild-sprintf` was built as
+`sprintf PC%ld -` — missing the literal `append` selector word. Every one of the 128
+rebuild messages sent to slotmenu therefore looked like `"PC5 - Preset 5"` instead of
+`"append PC5 - Preset 5"`. A umenu doesn't recognize `PC5` as a message selector (it's
+neither a known command like `append`/`clear`/`set` nor a bare int), so Max silently (or
+with a console error) dropped every single append — after the load-time `clear`, the
+menu was left with exactly 0 items. That explains BOTH symptoms directly: an empty umenu
+has nothing to show when clicked ("unresponsive, nothing selectable"), and SAVE/RECALL
+(which work by banging slotmenu to re-assert its current selection before building the
+`store N`/`recall N` message) get no output from an item-less umenu, so the store/recall
+messages never receive a valid slot argument.
+Fix: `sprintf append PC%ld -` (the `append` word lives in the format string itself, since
+the downstream `prepend` object only ever prepends whatever text it was last given — it
+was never going to add "append" on its own).
+
+While fixing this, also caught a second, latent bug in the same area (not yet visible to
+the user, since it requires either a first-ever load or a rename to trigger, but would
+have corrupted preset names silently): `obj-c34-slotshadow`'s single outlet fed BOTH the
+rename-store chain (`slot1-name` → `namepack` → `namecoll`) AND the post-rebuild
+selection-restore chain (`restore-pset`). Since the rebuild's "restore selection" step
+bangs this shadow on EVERY rebuild (at load, and after every rename), it was also firing
+the rename-store chain every time — writing whatever stale (or, on first load,
+uninitialized) value happened to be sitting in `namepack`'s cold inlet into `namecoll` at
+the current slot, silently overwriting that preset's name. Fix: split into two separate
+shadow ints, `obj-c34-slotshadow` (rename-fetch only) and `obj-c34-slotshadow-restore`
+(selection-restore only), both cold-tapped from the same slotmenu output but with no
+shared consumer — mirrors the "hw-holder vs display-shadow" split already used elsewhere
+in this patch specifically to prevent this class of cross-talk.
+
+Both fixes are in `build_control34.py`; Control-34 regenerated (779 objects, 1241 lines)
+and re-validated (`validate_control34.py` now also asserts the sprintf text contains
+"append" and that the two shadows have no cross-wiring).
+RETEST: umenu must show all 128 items ("PC0 - Preset 1".."PC127 - Preset 128") on load
+and be selectable; SAVE/RECALL must work; then retest renaming (MAX-TEST item d above),
+which couldn't be attempted at all before this fix.
 
 ## 33: SYNC-expr ternary fix + DFX slots into presets
 Generated by `sp404gen/build_control33.py` (from Control-32); structurally validated by

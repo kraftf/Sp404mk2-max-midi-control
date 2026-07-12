@@ -42,24 +42,34 @@ Builds Roland_SP404MK2_Control-34.maxpat from Control-33. Two new features:
    - Rebuild routine (obj-c34-rebuild-t / -uzi / -split / -minus1 /
      -sprintf / -prependset): clears slotmenu and re-appends all 128 items
      as "append PC<n> - <name...>", built from a proven single-specifier
-     `sprintf PC%ld -` (same pattern as the existing `sprintf send Bus%d_X`
-     objects) plus a *dynamically re-armed* `prepend` (no fixed arg; its
-     right/cold inlet is fed the sprintf's "PC<n> -" text before its
-     left/hot inlet receives the coll's stored name, so `prepend` outputs
-     "append PC<n> - <name...>" as one message straight into slotmenu).
-     Runs once on load (obj-c34-lb) and once after every rename.
+     `sprintf append PC%ld -` (same pattern as the existing
+     `sprintf send Bus%d_X` objects) plus a *dynamically re-armed* `prepend`
+     (no fixed arg; its right/cold inlet is fed the sprintf's
+     "append PC<n> -" text before its left/hot inlet receives the coll's
+     stored name, so `prepend` outputs "append PC<n> - <name...>" as one
+     message straight into slotmenu -- the literal "append" selector word
+     lives in the sprintf format string, NOT added separately, since
+     `prepend` only ever prepends whatever text it was last given).
+     Runs once on load (obj-c34-lb2) and once after every rename.
    - Rename UI: obj-c34-nameedit (`textedit`, free text, no PC number typed
      by the user) -> obj-c34-namet (`t b b l`, right-to-left): the passed-
      through text is stored into namepack's cold inlet FIRST, then the
-     current slot (from a shadow int, +1) triggers namepack's hot inlet to
-     write [slot, name] into namecoll, and only THEN (last) is the full
-     rebuild kicked off -- so the rebuild's coll lookups always see the just
-     -written name, never a stale one.
+     current slot (from obj-c34-slotshadow, +1) triggers namepack's hot
+     inlet to write [slot, name] into namecoll, and only THEN (last) is the
+     full rebuild kicked off -- so the rebuild's coll lookups always see the
+     just-written name, never a stale one.
    - obj-c34-slotshadow (`int`, cold-tapped from slotmenu's own outlet, same
-     "shadow int" idiom used everywhere else in this patch) is what lets
-     both the rename path (fetch current slot to store into) and the post-
-     rebuild step (restore the visible selection via `prepend set`, since
-     `clear` wipes it) know the current slot without disturbing anything.
+     "shadow int" idiom used everywhere else in this patch) exists so the
+     rename path can fetch the current slot without disturbing anything.
+     The post-rebuild step (restore the visible selection via `prepend set`,
+     since `clear` wipes it) uses its OWN separate shadow,
+     obj-c34-slotshadow-restore, cold-tapped from the same source -- kept
+     deliberately off obj-c34-slotshadow's outlet so that banging it to
+     restore the display can never also fire the rename-store chain (they'd
+     otherwise share one outlet's fan-out, with namepack picking up
+     whatever stale/uninitialized name happened to be sitting in its cold
+     inlet -- this was a real bug in the first Control-34 build, caught
+     before it shipped).
 
 Presets companion file renamed to Control34_presets.json (format unchanged --
 still lacks any DFX/name data by design; names live in the embedded coll,
@@ -214,6 +224,15 @@ add_box({'id': 'obj-c34-slotshadow', 'maxclass': 'newobj', 'text': 'int 0',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
          'patching_rect': [5100.0, 4540.0, 50.0, 22.0]})
 add_line('obj-pv2-slotmenu', 0, 'obj-c34-slotshadow', 1)  # cold tap, silent
+# separate shadow for the post-rebuild selection restore -- keeping this off
+# obj-c34-slotshadow's own outlet means banging it to restore the display
+# can never also fire the rename-store chain below (they'd otherwise share
+# one outlet's fan-out, with namepack picking up whatever stale/uninitialized
+# name happened to be in its cold inlet)
+add_box({'id': 'obj-c34-slotshadow-restore', 'maxclass': 'newobj', 'text': 'int 0',
+         'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
+         'patching_rect': [5100.0, 4570.0, 50.0, 22.0]})
+add_line('obj-pv2-slotmenu', 0, 'obj-c34-slotshadow-restore', 1)  # cold tap, silent
 
 # --- rename UI ---
 add_box({'id': 'obj-c34-name-cmt', 'maxclass': 'comment',
@@ -259,7 +278,7 @@ add_box({'id': 'obj-c34-rebuild-split', 'maxclass': 'newobj', 'text': 't i i',
 add_box({'id': 'obj-c34-rebuild-minus1', 'maxclass': 'newobj', 'text': '- 1',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
          'patching_rect': [5160.0, 4820.0, 40.0, 22.0]})
-add_box({'id': 'obj-c34-rebuild-sprintf', 'maxclass': 'newobj', 'text': 'sprintf PC%ld -',
+add_box({'id': 'obj-c34-rebuild-sprintf', 'maxclass': 'newobj', 'text': 'sprintf append PC%ld -',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5160.0, 4850.0, 90.0, 22.0]})
 add_box({'id': 'obj-c34-rebuild-prependset', 'maxclass': 'newobj', 'text': 'prepend',
@@ -284,8 +303,8 @@ add_line('obj-c34-rebuild-prependset', 0, 'obj-pv2-slotmenu', 0)
 add_box({'id': 'obj-c34-restore-pset', 'maxclass': 'newobj', 'text': 'prepend set',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5260.0, 4760.0, 70.0, 22.0]})
-add_line('obj-c34-rebuild-uzi', 1, 'obj-c34-slotshadow', 0)  # done-bang -> re-output current slot
-add_line('obj-c34-slotshadow', 0, 'obj-c34-restore-pset', 0)
+add_line('obj-c34-rebuild-uzi', 1, 'obj-c34-slotshadow-restore', 0)  # done-bang -> re-output current slot
+add_line('obj-c34-slotshadow-restore', 0, 'obj-c34-restore-pset', 0)
 add_line('obj-c34-restore-pset', 0, 'obj-pv2-slotmenu', 0)
 
 # =====================================================================

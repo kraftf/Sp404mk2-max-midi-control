@@ -232,13 +232,34 @@ required_rename_chain = [
     (('obj-c34-rebuild-split', 0), ('obj-c34-namecoll', 0)),
     (('obj-c34-namecoll', 0), ('obj-c34-rebuild-prependset', 0)),
     (('obj-c34-rebuild-prependset', 0), ('obj-pv2-slotmenu', 0)),
-    (('obj-c34-rebuild-uzi', 1), ('obj-c34-slotshadow', 0)),
-    (('obj-c34-slotshadow', 0), ('obj-c34-restore-pset', 0)),
+    (('obj-c34-rebuild-uzi', 1), ('obj-c34-slotshadow-restore', 0)),
+    (('obj-c34-slotshadow-restore', 0), ('obj-c34-restore-pset', 0)),
     (('obj-c34-restore-pset', 0), ('obj-pv2-slotmenu', 0)),
 ]
 for src, dst in required_rename_chain:
     if (src, dst) not in conn:
         errors.append(f'missing rename/rebuild wire: {src} -> {dst}')
+
+# rebuild's sprintf must include the literal "append" selector -- without it,
+# every rebuilt umenu item is an unrecognized message and gets silently
+# dropped, leaving slotmenu with 0 items (the "umenu completely unresponsive"
+# bug found in the first Control-34 Max test)
+sprintf_box = box_by_id.get('obj-c34-rebuild-sprintf')
+if sprintf_box is None or not sprintf_box['text'].startswith('sprintf append '):
+    errors.append(f'obj-c34-rebuild-sprintf: expected to start with '
+                  f'"sprintf append ", got {sprintf_box and sprintf_box["text"]!r}')
+
+# obj-c34-slotshadow (rename fetch) and obj-c34-slotshadow-restore (post-
+# rebuild selection restore) must be two DISTINCT objects, each feeding only
+# its own consumer -- sharing one shadow's outlet would make every selection
+# restore also silently overwrite a namecoll entry with a stale/uninitialized
+# name (the cross-talk bug found and fixed alongside the sprintf bug above)
+if (('obj-c34-slotshadow', 0), ('obj-c34-restore-pset', 0)) in conn:
+    errors.append('obj-c34-slotshadow must not feed obj-c34-restore-pset directly '
+                  '(use obj-c34-slotshadow-restore instead)')
+if (('obj-c34-slotshadow-restore', 0), ('obj-c34-slot1-name', 0)) in conn:
+    errors.append('obj-c34-slotshadow-restore must not feed obj-c34-slot1-name '
+                  '(that would fire a spurious namecoll store on every rebuild)')
 
 print(f'{target}')
 print(f'  boxes: {len(boxes)}, lines: {len(lines)}')
