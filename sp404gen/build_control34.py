@@ -311,15 +311,27 @@ add_box({'id': 'obj-c34-namemsg', 'maxclass': 'message', 'text': 'slotname $2 $1
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5100.0, 4740.0, 100.0, 20.0]})
 add_line('obj-c34-namepack', 0, 'obj-c34-namemsg', 0)
-# t b l (right-to-left): out1 (FIRST) sends the rename straight into
-# pattrstorage; out0 (SECOND) kicks off a refresh once the rename has
-# actually landed
-add_box({'id': 'obj-c34-name-t', 'maxclass': 'newobj', 'text': 't b l',
-         'numinlets': 1, 'numoutlets': 2, 'outlettype': ['bang', ''],
-         'patching_rect': [5100.0, 4770.0, 40.0, 22.0]})
+# t b l b (right-to-left): out2 (FIRST, NEW) clears the textedit box so
+# leftover text can't get silently prepended to the next thing typed
+# (confirmed by Max testing: a rename landed as "Downer my" -- "Downer"
+# was leftover from an earlier interaction, "my" was what was actually
+# typed this time, and textedit never clears itself on its own); out1
+# (SECOND) sends the rename straight into pattrstorage; out0 (THIRD/LAST)
+# kicks off a refresh once the rename has actually landed. Existing outlet
+# indices 0 and 1 are unchanged from the prior "t b l" -- the new outlet
+# was added at the front (rightmost, fires first) so nothing downstream
+# needed remapping.
+add_box({'id': 'obj-c34-name-t', 'maxclass': 'newobj', 'text': 't b l b',
+         'numinlets': 1, 'numoutlets': 3, 'outlettype': ['bang', '', 'bang'],
+         'patching_rect': [5100.0, 4770.0, 50.0, 22.0]})
 add_line('obj-c34-namemsg', 0, 'obj-c34-name-t', 0)
-add_line('obj-c34-name-t', 1, 'obj-pv2-pattrstorage', 0)   # FIRST: rename command
-add_line('obj-c34-name-t', 0, 'obj-c34-refresh-t', 0)      # SECOND: refresh (defined below)
+add_line('obj-c34-name-t', 1, 'obj-pv2-pattrstorage', 0)   # SECOND: rename command
+add_line('obj-c34-name-t', 0, 'obj-c34-refresh-t', 0)      # THIRD/LAST: refresh (defined below)
+add_box({'id': 'obj-c34-nameedit-clear', 'maxclass': 'message', 'text': 'clear',
+         'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [5170.0, 4770.0, 50.0, 20.0]})
+add_line('obj-c34-name-t', 2, 'obj-c34-nameedit-clear', 0)  # FIRST: clear the box
+add_line('obj-c34-nameedit-clear', 0, 'obj-c34-nameedit', 0)
 
 # --- refresh routine (shared by loadbang, rename, and SAVE) ---
 add_box({'id': 'obj-c34-lb2', 'maxclass': 'newobj', 'text': 'loadbang',

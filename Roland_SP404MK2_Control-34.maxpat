@@ -78319,18 +78319,37 @@
     "box": {
      "id": "obj-c34-name-t",
      "maxclass": "newobj",
-     "text": "t b l",
+     "text": "t b l b",
      "numinlets": 1,
-     "numoutlets": 2,
+     "numoutlets": 3,
      "outlettype": [
       "bang",
-      ""
+      "",
+      "bang"
      ],
      "patching_rect": [
       5100.0,
       4770.0,
-      40.0,
+      50.0,
       22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-nameedit-clear",
+     "maxclass": "message",
+     "text": "clear",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ],
+     "patching_rect": [
+      5170.0,
+      4770.0,
+      50.0,
+      20.0
      ]
     }
    },
@@ -93456,6 +93475,30 @@
      ],
      "destination": [
       "obj-c34-refresh-t",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-name-t",
+      2
+     ],
+     "destination": [
+      "obj-c34-nameedit-clear",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-nameedit-clear",
+      0
+     ],
+     "destination": [
+      "obj-c34-nameedit",
       0
      ]
     }

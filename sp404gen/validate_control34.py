@@ -269,7 +269,13 @@ required_rename_chain = [
     (('obj-c34-namemsg', 0), ('obj-c34-name-t', 0)),
     (('obj-c34-name-t', 1), ('obj-pv2-pattrstorage', 0)),
     (('obj-c34-name-t', 0), ('obj-c34-refresh-t', 0)),
+    (('obj-c34-name-t', 2), ('obj-c34-nameedit-clear', 0)),
+    (('obj-c34-nameedit-clear', 0), ('obj-c34-nameedit', 0)),
 ]
+if box_by_id.get('obj-c34-name-t', {}).get('text') != 't b l b':
+    errors.append('obj-c34-name-t should be "t b l b" (clears the textbox after rename)')
+if box_by_id.get('obj-c34-nameedit-clear', {}).get('text') != 'clear':
+    errors.append('obj-c34-nameedit-clear should be the message "clear"')
 for src, dst in required_rename_chain:
     if (src, dst) not in conn:
         errors.append(f'missing rename wire: {src} -> {dst}')
