@@ -287,15 +287,18 @@ add_line('obj-c34-nameedit', 0, 'obj-c34-route-text', 0)
 # current slot, tracked continuously (no bang-fetch needed -- fires on
 # every real selection change, which always happens well before the user
 # finishes typing a name, so pack's cold inlet is already correct by the
-# time Return commits the text). NOT offset by +1: pattrstorage's own
-# "slotname" numbering is 0-based and matches obj-pv2-slotmenu's own
-# 0-based item index directly -- confirmed by Max testing, where an
-# earlier +1 here (copied from the unrelated SAVE/RECALL "store N +1"
-# convention) renamed the slot AFTER the one actually selected. Kept as a
-# "+ 0" object rather than wiring straight through so the intent (this is
-# deliberately a no-op, not a forgotten adjustment) stays visible in the
-# patch.
-add_box({'id': 'obj-c34-slot1', 'maxclass': 'newobj', 'text': '+ 0',
+# time Return commits the text). Offset by +1 again -- but for a DIFFERENT
+# reason than the original (wrong) +1 this replaced: pattrstorage's own
+# "slotname" numbering IS 0-based and DOES match obj-pv2-slotmenu's index
+# directly in general, but obj-c34-slotname-notzero filters pattrstorage's
+# slot 0 out of the rebuilt menu entirely (see below), so the umenu's OWN
+# item positions no longer line up 1:1 with real pattrstorage slot numbers
+# once that filter is in play -- every visible item is shifted down by
+# exactly the one slot that was omitted. Confirmed by Max testing: without
+# this offset, renaming targeted the slot immediately BEFORE the one
+# actually selected (the reverse of the original +1 bug, which existed
+# before slot 0 was filtered out of the list at all).
+add_box({'id': 'obj-c34-slot1', 'maxclass': 'newobj', 'text': '+ 1',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
          'patching_rect': [5100.0, 4680.0, 40.0, 22.0]})
 add_line('obj-pv2-slotmenu', 0, 'obj-c34-slot1', 0)

@@ -255,12 +255,14 @@ if box_by_id.get('obj-c34-namepack', {}).get('text') != 'pack s i':
     errors.append('obj-c34-namepack should be "pack s i"')
 if box_by_id.get('obj-c34-namemsg', {}).get('text') != 'slotname $2 $1':
     errors.append('obj-c34-namemsg should be the message "slotname $2 $1"')
-# NOT offset by +1 -- pattrstorage's own "slotname" numbering is 0-based and
-# matches slotmenu's own 0-based item index directly. An earlier +1 here
-# (copied from the unrelated SAVE/RECALL "store N" convention) renamed the
-# slot AFTER the one actually selected, confirmed by Max testing.
-if box_by_id.get('obj-c34-slot1', {}).get('text') != '+ 0':
-    errors.append('obj-c34-slot1 should be "+ 0" (no offset -- see comment in build script)')
+# +1: obj-c34-slotname-notzero filters pattrstorage's slot 0 out of the
+# rebuilt menu, so the umenu's own item positions no longer line up 1:1
+# with real pattrstorage slot numbers -- every visible item is shifted
+# down by the one slot that was omitted. Confirmed by Max testing: without
+# this offset, renaming targeted the slot immediately BEFORE the one
+# actually selected.
+if box_by_id.get('obj-c34-slot1', {}).get('text') != '+ 1':
+    errors.append('obj-c34-slot1 should be "+ 1" (compensates for the slot-0 filter -- see comment in build script)')
 required_rename_chain = [
     (('obj-pv2-slotmenu', 0), ('obj-c34-slot1', 0)),
     (('obj-c34-route-text', 0), ('obj-c34-namepack', 0)),
