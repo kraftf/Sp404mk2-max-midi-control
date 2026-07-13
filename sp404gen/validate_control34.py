@@ -196,39 +196,36 @@ for name, cc, target_id, kind in MIDI_TARGETS:
         if ((gate_id, 0), (target_id, 0)) not in conn:
             errors.append(f'missing {gate_id} -> {target_id} hot inlet 0')
 
-# 11. 128 presets: slotmenu must have 128 items, PC split must cover 0-127,
-#     and the rename/rebuild machinery must be present and wired
+# 11. 128 presets: slotmenu must have 128 placeholder items, PC split must
+#     cover 0-127, and renaming/display must use pattrstorage's OWN native
+#     slot-naming protocol (getslotnamelist / slotname <n> <name> /
+#     slotname done) -- NOT a custom coll -- per the working reference
+#     patch the user supplied (MIDI_CC_scene_morph.maxpat) after three
+#     from-scratch attempts each failed differently.
 if box_by_id['obj-pv2-pgsplit']['text'] != 'split 0 127':
     errors.append(f'obj-pv2-pgsplit: expected "split 0 127", got '
                   f'{box_by_id["obj-pv2-pgsplit"]["text"]!r}')
 slotmenu_items = box_by_id['obj-pv2-slotmenu'].get('items', [])
 n_slot_items = sum(1 for it in slotmenu_items if it != ',') // 2  # each item is "Preset" "N"
 if n_slot_items != 128:
-    errors.append(f'obj-pv2-slotmenu: expected 128 items, found {n_slot_items}')
-namecoll = box_by_id.get('obj-c34-namecoll')
-if namecoll is None:
-    errors.append('obj-c34-namecoll not found')
-else:
-    cd = namecoll.get('coll_data', {})
-    if cd.get('count') != 128 or len(cd.get('data', [])) != 128:
-        errors.append(f'obj-c34-namecoll: expected 128 embedded entries, found {cd.get("count")}')
-    keys = {row['key'] for row in cd.get('data', [])}
-    if keys != set(range(1, 129)):
-        errors.append('obj-c34-namecoll: keys are not exactly 1..128')
+    errors.append(f'obj-pv2-slotmenu: expected 128 placeholder items, found {n_slot_items}')
+for dead in ('obj-c34-namecoll', 'obj-c34-slotshadow-restore', 'obj-c34-namet',
+            'obj-c34-slot1-name', 'obj-c34-rebuild-t', 'obj-c34-clear-msg',
+            'obj-c34-rebuild-uzi', 'obj-c34-rebuild-split', 'obj-c34-rebuild-minus1',
+            'obj-c34-rebuild-sprintf', 'obj-c34-rebuild-zljoin', 'obj-c34-nameedit-outmode',
+            'obj-c34-rebuild-prependset'):
+    if dead in box_by_id:
+        errors.append(f'{dead} should no longer exist (replaced by pattrstorage-native '
+                      'slot naming)')
 
-# uzi's args are <repetitions> <base>, not <repetitions> <outlet-index> -- a
-# base value other than the implicit default of 1 would shift the counter
-# away from matching namecoll's 1-128 keys (the "starts at PC2, ends at
-# PC129" bug found in Max testing)
-uzi_box = box_by_id.get('obj-c34-rebuild-uzi')
-if uzi_box is None or uzi_box['text'] != 'uzi 128':
-    errors.append(f'obj-c34-rebuild-uzi: expected "uzi 128" (base defaults to 1), '
-                  f'got {uzi_box and uzi_box["text"]!r}')
-
-# textedit defaults to keymode 0 (Return never outputs anything). Setting it
-# as a creation-time JSON attribute did NOT take effect in real Max testing;
-# it must be sent as an explicit message at load instead (documented Max
-# mechanism). Confirmed fixed by the user: Return now commits.
+# textedit: keymode via message (creation-time attribute didn't take effect;
+# confirmed fixed -- Return now commits) + outputmode 1 as a creation
+# attribute (matches the user's own working reference patch) -- but route
+# text is STILL required regardless of outputmode, since textedit prepends
+# its "text" selector unconditionally (confirmed both by Max forum threads
+# and by the reference patch, which also uses route text despite outputmode 1)
+if box_by_id.get('obj-c34-nameedit', {}).get('outputmode') != 1:
+    errors.append('obj-c34-nameedit: expected outputmode=1')
 msg_box = box_by_id.get('obj-c34-nameedit-keymode')
 if msg_box is None or msg_box['text'] != 'keymode 1':
     errors.append(f'obj-c34-nameedit-keymode: expected "keymode 1", got '
@@ -236,79 +233,75 @@ if msg_box is None or msg_box['text'] != 'keymode 1':
 if (('obj-c34-nameedit-lb', 0), ('obj-c34-nameedit-keymode', 0)) not in conn or \
    (('obj-c34-nameedit-keymode', 0), ('obj-c34-nameedit', 0)) not in conn:
     errors.append('missing obj-c34-nameedit-lb -> keymode msg -> nameedit chain')
-if 'obj-c34-nameedit-outmode' in box_by_id:
-    errors.append('obj-c34-nameedit-outmode should no longer exist -- an outputmode 1 '
-                  'message had no effect in real Max testing; textedit always prepends '
-                  'a "text" selector regardless, stripped instead by obj-c34-route-text')
-
-# textedit ALWAYS prepends the literal selector "text" to its output
-# regardless of outputmode (confirmed by Max forum threads about this exact
-# gotcha) -- route text must strip it before anything downstream sees it
 if box_by_id.get('obj-c34-route-text', {}).get('text') != 'route text':
     errors.append('obj-c34-route-text missing or not "route text"')
 if (('obj-c34-nameedit', 0), ('obj-c34-route-text', 0)) not in conn:
     errors.append('missing obj-c34-nameedit -> obj-c34-route-text')
 
+# rename-send: pack s i (hot=text, cold=continuously-tracked slot#) reordered
+# via a message box into pattrstorage's own "slotname <n> <name>" syntax,
+# sent directly into obj-pv2-pattrstorage (mirrors the reference patch's
+# obj-22/obj-13/obj-30 exactly)
+if box_by_id.get('obj-c34-namepack', {}).get('text') != 'pack s i':
+    errors.append('obj-c34-namepack should be "pack s i"')
+if box_by_id.get('obj-c34-namemsg', {}).get('text') != 'slotname $2 $1':
+    errors.append('obj-c34-namemsg should be the message "slotname $2 $1"')
 required_rename_chain = [
-    (('obj-c34-route-text', 0), ('obj-c34-namet', 0)),
-    (('obj-c34-namet', 2), ('obj-c34-slotshadow', 0)),
-    (('obj-c34-slotshadow', 0), ('obj-c34-slot1-name', 0)),
-    (('obj-c34-slot1-name', 0), ('obj-c34-namepack', 1)),
-    (('obj-c34-namet', 1), ('obj-c34-namepack', 0)),
-    (('obj-c34-namepack', 0), ('obj-c34-namecoll', 0)),
-    (('obj-c34-namet', 0), ('obj-c34-rebuild-t', 0)),
-    (('obj-c34-rebuild-t', 1), ('obj-c34-clear-msg', 0)),
-    (('obj-c34-clear-msg', 0), ('obj-pv2-slotmenu', 0)),
-    (('obj-c34-rebuild-t', 0), ('obj-c34-rebuild-uzi', 0)),
-    (('obj-c34-rebuild-uzi', 2), ('obj-c34-rebuild-split', 0)),
-    (('obj-c34-rebuild-split', 1), ('obj-c34-namecoll', 0)),
-    (('obj-c34-namecoll', 0), ('obj-c34-rebuild-zljoin', 1)),
-    (('obj-c34-rebuild-split', 0), ('obj-c34-rebuild-minus1', 0)),
-    (('obj-c34-rebuild-minus1', 0), ('obj-c34-rebuild-sprintf', 0)),
-    (('obj-c34-rebuild-sprintf', 0), ('obj-c34-rebuild-zljoin', 0)),
-    (('obj-c34-rebuild-zljoin', 0), ('obj-pv2-slotmenu', 0)),
-    (('obj-c34-rebuild-uzi', 1), ('obj-c34-slotshadow-restore', 0)),
-    (('obj-c34-slotshadow-restore', 0), ('obj-c34-restore-pset', 0)),
-    (('obj-c34-restore-pset', 0), ('obj-pv2-slotmenu', 0)),
+    (('obj-pv2-slotmenu', 0), ('obj-c34-slot1', 0)),
+    (('obj-c34-route-text', 0), ('obj-c34-namepack', 0)),
+    (('obj-c34-slot1', 0), ('obj-c34-namepack', 1)),
+    (('obj-c34-namepack', 0), ('obj-c34-namemsg', 0)),
+    (('obj-c34-namemsg', 0), ('obj-c34-name-t', 0)),
+    (('obj-c34-name-t', 1), ('obj-pv2-pattrstorage', 0)),
+    (('obj-c34-name-t', 0), ('obj-c34-refresh-t', 0)),
 ]
 for src, dst in required_rename_chain:
     if (src, dst) not in conn:
-        errors.append(f'missing rename/rebuild wire: {src} -> {dst}')
+        errors.append(f'missing rename wire: {src} -> {dst}')
 
-# rebuild's sprintf must include the literal "append" selector -- without it,
-# every rebuilt umenu item is an unrecognized message and gets silently
-# dropped, leaving slotmenu with 0 items (the "umenu completely unresponsive"
-# bug found in an earlier Control-34 Max test). It's single-specifier only
-# now (just the PC number) -- combining with the name is zl.join's job, not
-# sprintf's, since names can be more than one atom and %s only takes one.
-sprintf_box = box_by_id.get('obj-c34-rebuild-sprintf')
-expected_sprintf = 'sprintf append PC%ld -'
-if sprintf_box is None or sprintf_box['text'] != expected_sprintf:
-    errors.append(f'obj-c34-rebuild-sprintf: expected {expected_sprintf!r}, '
-                  f'got {sprintf_box and sprintf_box["text"]!r}')
-if box_by_id.get('obj-c34-rebuild-zljoin', {}).get('text') != 'zl.join':
-    errors.append('obj-c34-rebuild-zljoin missing or not "zl.join"')
-for dead in ('obj-c34-rebuild-prependset', 'obj-c34-nameedit-outmode'):
-    if dead in box_by_id:
-        errors.append(f'{dead} should no longer exist')
+# refresh: t b b -> (FIRST) clear + open gate, (SECOND) ask pattrstorage for
+# its slot-name list; shared by loadbang and the post-rename trigger above
+required_refresh_chain = [
+    (('obj-c34-lb2', 0), ('obj-c34-refresh-t', 0)),
+    (('obj-c34-refresh-t', 1), ('obj-c34-clearopen', 0)),
+    (('obj-c34-clearopen', 1), ('obj-pv2-slotmenu', 0)),
+    (('obj-c34-clearopen', 0), ('obj-c34-gate', 0)),
+    (('obj-c34-refresh-t', 0), ('obj-c34-getslotnamelist', 0)),
+    (('obj-c34-getslotnamelist', 0), ('obj-pv2-pattrstorage', 0)),
+]
+for src, dst in required_refresh_chain:
+    if (src, dst) not in conn:
+        errors.append(f'missing refresh wire: {src} -> {dst}')
+if box_by_id.get('obj-c34-clearopen', {}).get('text') != 't 1 clear':
+    errors.append('obj-c34-clearopen should be "t 1 clear"')
+if box_by_id.get('obj-c34-getslotnamelist', {}).get('text') != 'getslotnamelist':
+    errors.append('obj-c34-getslotnamelist should be the message "getslotnamelist"')
 
-# namepack must be a bare, dynamically-armed `prepend` (single-atom slot
-# number as the prefix -- this direction of dynamic re-arming is fine, unlike
-# the rebuild's earlier failed attempt to re-arm a prefix with multiple atoms)
-if box_by_id.get('obj-c34-namepack', {}).get('text') != 'prepend':
-    errors.append('obj-c34-namepack should be a bare "prepend" (single-atom slot prefix)')
-
-# obj-c34-slotshadow (rename fetch) and obj-c34-slotshadow-restore (post-
-# rebuild selection restore) must be two DISTINCT objects, each feeding only
-# its own consumer -- sharing one shadow's outlet would make every selection
-# restore also silently overwrite a namecoll entry with a stale/uninitialized
-# name (a cross-talk bug found and fixed earlier this session)
-if (('obj-c34-slotshadow', 0), ('obj-c34-restore-pset', 0)) in conn:
-    errors.append('obj-c34-slotshadow must not feed obj-c34-restore-pset directly '
-                  '(use obj-c34-slotshadow-restore instead)')
-if (('obj-c34-slotshadow-restore', 0), ('obj-c34-slot1-name', 0)) in conn:
-    errors.append('obj-c34-slotshadow-restore must not feed obj-c34-slot1-name '
-                  '(that would fire a spurious namecoll store on every rebuild)')
+# parse pattrstorage's reply stream: route slotname -> route done ->
+# (matched: close gate + restore selection) / (unmatched "<n> <name>":
+# unpack -> PC-prefix sprintf + zl.join -> gate data -> slotmenu)
+if (('obj-pv2-pattrstorage', 0), ('obj-c34-slotname-route', 0)) not in conn:
+    errors.append('missing obj-pv2-pattrstorage -> obj-c34-slotname-route tap')
+required_parse_chain = [
+    (('obj-c34-slotname-route', 0), ('obj-c34-slotname-done', 0)),
+    (('obj-c34-slotname-done', 0), ('obj-c34-gateclose', 0)),
+    (('obj-c34-gateclose', 0), ('obj-c34-gate', 0)),
+    (('obj-c34-slotname-done', 0), ('obj-c34-slotshadow', 0)),
+    (('obj-c34-slotshadow', 0), ('obj-c34-restore-pset', 0)),
+    (('obj-c34-restore-pset', 0), ('obj-pv2-slotmenu', 0)),
+    (('obj-c34-slotname-done', 1), ('obj-c34-slotname-unpack', 0)),
+    (('obj-c34-slotname-unpack', 0), ('obj-c34-slotname-minus1', 0)),
+    (('obj-c34-slotname-minus1', 0), ('obj-c34-slotname-sprintf', 0)),
+    (('obj-c34-slotname-unpack', 1), ('obj-c34-slotname-zljoin', 1)),
+    (('obj-c34-slotname-sprintf', 0), ('obj-c34-slotname-zljoin', 0)),
+    (('obj-c34-slotname-zljoin', 0), ('obj-c34-gate', 1)),
+    (('obj-c34-gate', 0), ('obj-pv2-slotmenu', 0)),
+]
+for src, dst in required_parse_chain:
+    if (src, dst) not in conn:
+        errors.append(f'missing parse wire: {src} -> {dst}')
+if box_by_id.get('obj-c34-slotname-sprintf', {}).get('text') != 'sprintf append PC%ld -':
+    errors.append('obj-c34-slotname-sprintf should be "sprintf append PC%ld -"')
 
 print(f'{target}')
 print(f'  boxes: {len(boxes)}, lines: {len(lines)}')

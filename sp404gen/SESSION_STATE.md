@@ -6,25 +6,22 @@ system with pattrstorage/pattrforward and passed all no-hardware Max tests. Cont
 added the 5 DFX slot assignments to the preset system, and fixed two Max-test-found bugs
 (cross-group bus-switch label scramble; post-SAVE/RECALL MIDI-channel-5 residue) — ALL
 FOUR retested and confirmed working by the user in Max (2026-07-12, no hardware).
-Roland_SP404MK2_Control-34.maxpat (782 objects, 1244 lines) builds on Control-33: adds
+Roland_SP404MK2_Control-34.maxpat (785 objects, 1249 lines) builds on Control-33: adds
 MIDI Control Input (external CC control of the 8 hardware-facing controls) and expands
 the preset system to 128 slots (full PC range) with per-preset renaming — see
 "Control-34" section below.
-User-tested in Max (2026-07-12): MIDI Control Input confirmed working first try (only
-the mapped dial moves, only that one CC is sent). Numbering and SAVE/RECALL are both
-confirmed correct. Renaming took SIX rounds total to converge: (1) empty/unresponsive
-umenu — missing `append` selector in the rebuild's sprintf; (2) still broken — a
-`prepend`-based part of that fix didn't adopt its dynamic prefix the way assumed,
-replaced with a dual-specifier sprintf; (3) items shown but numbered wrong — `uzi 128
-3`'s "3" was misread as an outlet selector when it's the counter's starting value
-(fix confirmed correct); (4) Return didn't commit — `textedit`'s `keymode` attribute set
-at creation time never took effect, fixed via an explicit runtime message instead (fix
-confirmed correct); (5)/(6) committed text was always the literal word "text" — an
-`outputmode 1` message was tried and also had no effect; the actual, confirmed-by-Max-
-forums behavior is that `textedit` UNCONDITIONALLY prepends a `text` selector to its
-output, fixed with `route text` to strip it, plus a `zl.join`-based rebuild (replacing
-`%s`/`prepend`, both limited to one atom) so multi-word names survive intact. See the
-"Control-34" section below for the full sequence. NOT yet retested after this sixth fix.
+User-tested in Max (2026-07-12): MIDI Control Input confirmed working first try. Preset
+numbering and SAVE/RECALL are both confirmed correct. Renaming went through SIX rounds of
+a from-scratch coll/uzi/sprintf/zl.join system, each round fixing one bug and (twice)
+regressing or exposing another — see the "Control-34" section below for the blow-by-blow.
+That whole system has now been DELETED and replaced: the user supplied a working
+reference patch of their own that renames a pattrstorage-backed menu, and tracing it
+revealed pattrstorage has a NATIVE slot-naming protocol (`getslotnamelist` /
+`slotname <n> <name>` / `slotname done`) that this session didn't know about. The rename
+system is rebuilt on that native protocol instead of a custom coll — see "Rebuilt from
+scratch on pattrstorage's own native slot-naming protocol" below for the full design.
+NOT yet tested in Max at all in this form (seventh attempt at renaming, first attempt at
+the pattrstorage-native design).
 NOT YET tested: with real SP-404 MK2 hardware attached (per-bus MIDI channel dispatch,
 PC 0-7 recall to the actual unit — now PC 0-127).
 
@@ -325,6 +322,74 @@ at once:
 RETEST: rename a preset to something with a SPACE in it (e.g. "My Kit") -- the full
 phrase must appear, not just the first word, not the word "text". This is the sixth
 attempt at the renaming half of this test.
+
+### Rebuilt from scratch on pattrstorage's own native slot-naming protocol
+User retested: renamed labels showed as e.g. "PC0 - symbol Preset1" (the literal word
+"symbol" appearing, not the typed text), and pressing Return in the textedit box did
+nothing at all -- both regressions from the previous (confirmed-working) round, and both
+inside the from-scratch coll/uzi/sprintf/zl.join system this session had been iterating
+on for five rounds already.
+
+The user also supplied a working reference patch of their own (`MIDI_CC_scene_morph.maxpat`,
+uploaded, not committed to this repo) that renames a pattrstorage-backed menu. Tracing it
+revealed something this session didn't know: **`pattrstorage` has a native slot-naming
+protocol**, independent of the classic grid `preset` UI object --
+- `getslotnamelist` sent to pattrstorage makes it emit, via its own outlet, one
+  `slotname <preset#> <name>` message per slot, followed by a bare `slotname done`.
+- `slotname <preset#> <name>` sent TO pattrstorage renames that slot.
+This is a real, native pattrstorage feature (confirmed by the reference patch sending it
+directly to a bare `pattrstorage <name> @savemode 2` object, the same kind of object this
+patch already uses as `obj-pv2-pattrstorage` for its main preset values) -- not something
+that needs a custom coll, a rebuild loop, or careful multi-object hand-offs to reinvent.
+The entire from-scratch rename/rebuild system (namecoll, uzi, sprintf, zl.join, prepend,
+the shadow-int cross-talk fixes) is now DELETED and replaced with wiring adapted directly
+from the reference patch's `obj-22`/`obj-13`/`obj-30` (rename-send) and `menu-helper`
+(clear/gate/rebuild) subpatchers:
+
+- Rename-send: `obj-c34-slot1` (`+ 1`) continuously tracks the current 1-based slot
+  (no bang-fetch needed -- fed directly and hot from `obj-pv2-slotmenu`'s own outlet, so
+  by the time the user finishes typing it's already current) -> `obj-c34-namepack`
+  (`pack s i`, hot=text/cold=slot#) -> `obj-c34-namemsg` (message `slotname $2 $1`,
+  reordering pack's `[text, slot]` into pattrstorage's own `slotname <slot> <text>`
+  syntax) -> `obj-c34-name-t` (`t b l`, right-to-left): out1 (FIRST) sends the rename
+  straight into `obj-pv2-pattrstorage`; out0 (SECOND) triggers a refresh once the rename
+  has actually landed.
+- Refresh (shared by loadbang and post-rename): `obj-c34-refresh-t` (`t b b`): out1
+  (FIRST) -> `obj-c34-clearopen` (`t 1 clear`) clears the menu and opens
+  `obj-c34-gate`; out0 (SECOND) sends `getslotnamelist` to pattrstorage.
+- Parsing pattrstorage's reply (a NEW tap on `obj-pv2-pattrstorage`'s existing outlet,
+  purely additive -- nothing existing was touched): `obj-c34-slotname-route`
+  (`route slotname`) -> `obj-c34-slotname-done` (`route done`): matched "done" closes
+  the gate (`obj-c34-gateclose`, `t 0`) AND restores the visible selection
+  (`obj-c34-slotshadow`, banged, -> `prepend set` -> slotmenu); unmatched `<n> <name>`
+  goes to `obj-c34-slotname-unpack` (`unpack 0 s`), whose two ALREADY-SEPARATE outputs
+  (int n, symbol name -- no coll, no %s, no re-armed prepend needed) feed
+  `obj-c34-slotname-minus1`/`obj-c34-slotname-sprintf` (`sprintf append PC%ld -`) and
+  `obj-c34-slotname-zljoin` (`zl.join`, concatenating the PC-prefix with the name)
+  respectively, landing on `obj-c34-gate`'s data inlet -> `obj-pv2-slotmenu`.
+- `obj-c34-nameedit` gains `outputmode: 1` as a creation-time attribute (matching the
+  reference patch's own working config) IN ADDITION to `route text` -- the reference
+  patch keeps `route text` too despite `outputmode 1`, confirming (again) that
+  `outputmode` does NOT remove textedit's unconditional `text` selector; only `route
+  text` does.
+
+This removes ALL of: `obj-c34-namecoll`, `obj-c34-slotshadow-restore`, `obj-c34-namet`,
+`obj-c34-slot1-name`, and the entire `obj-c34-rebuild-*`/`obj-c34-lb2`(old)/`obj-c34-clear-msg`
+loop-based rebuild chain. `validate_control34.py` rewritten to match.
+
+⚠ UNVERIFIED, genuinely new risk: whether a BARE `pattrstorage` object (not bound to the
+classic grid `preset` UI object, which is what the reference patch actually uses)
+enumerates a full 1-128 slot range via `getslotnamelist` from a fresh/never-saved-to
+state, or only reports slots that have actually been stored to at least once. If only
+touched slots appear, the menu will show fewer than 128 items until each has been saved
+to once -- flagged as a MAX-TEST item below rather than guessed at further.
+RETEST: everything above, from scratch -- (i) console clean on load; (ii) menu shows
+placeholder/default names for all (or however many) slots pattrstorage reports, each
+prefixed "PC<n> -"; (iii) SAVE/RECALL still work (unchanged code path); (iv) rename a
+preset (including one with a space in the name) -- Return commits it, the menu shows the
+real typed name immediately with the same slot still selected, and re-opening Max after
+a SAVE should show the renamed label persisted (pattrstorage's own slot names are saved
+as part of its own `@savemode`d file, same file this patch already reads/writes).
 
 ## 33: SYNC-expr ternary fix + DFX slots into presets
 Generated by `sp404gen/build_control33.py` (from Control-32); structurally validated by

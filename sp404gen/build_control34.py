@@ -210,6 +210,22 @@ for i, (name, cc, target_id, kind) in enumerate(MIDI_TARGETS):
 
 # =====================================================================
 # 2. 128 PRESETS + rename
+#
+# Rebuilt from scratch after three failed from-scratch attempts (missing
+# "append" selector; a `prepend` that didn't adopt a multi-atom dynamic
+# prefix; uzi's base-value argument; a coll whose single-atom values got
+# wrapped as "symbol <value>" on lookup; textedit's unconditional "text"
+# selector). The user supplied a WORKING reference patch of their own
+# (MIDI_CC_scene_morph.maxpat) that renames a menu backed by pattrstorage --
+# tracing it revealed pattrstorage has a NATIVE slot-naming protocol:
+#   - "getslotnamelist" sent to pattrstorage makes it emit, via its own
+#     outlet, one "slotname <preset#> <name>" message per slot it knows
+#     about, followed by a bare "slotname done".
+#   - "slotname <preset#> <name>" sent TO pattrstorage renames that slot.
+# This is pattrstorage's own feature (not specific to the classic grid
+# `preset` UI object) -- using it here replaces the entire custom coll +
+# uzi-loop + sprintf/zl.join rebuild machinery with pattrstorage's own
+# bookkeeping, which is what the reference patch does.
 # =====================================================================
 N_PRESETS = 128
 
@@ -221,163 +237,143 @@ slotmenu['items'] = []
 for n in range(1, N_PRESETS + 1):
     if n > 1:
         slotmenu['items'].append(',')
-    slotmenu['items'] += ['Preset', str(n)]
+    slotmenu['items'] += ['Preset', str(n)]  # placeholder only -- replaced at load by getslotnamelist
 
-add_box({'id': 'obj-c34-namecoll', 'maxclass': 'newobj',
-         'text': 'coll obj-c34-namecoll @embed 1',
-         'numinlets': 1, 'numoutlets': 4,
-         'outlettype': ['', '', '', ''],
-         'saved_object_attributes': {'embed': 1, 'precision': 6},
-         'patching_rect': [5100.0, 4500.0, 180.0, 22.0],
-         'coll_data': {
-             'count': N_PRESETS,
-             # single atom per entry, always -- sprintf's %s substitution
-             # takes exactly one value, so a 2-atom default like
-             # ['Preset', '5'] would only contribute 'Preset' and silently
-             # drop the number (textedit-typed renames are already always
-             # a single atom, spaces included, so this only affects defaults)
-             'data': [{'key': n, 'value': [f'Preset{n}']}
-                      for n in range(1, N_PRESETS + 1)],
-         }})
-
+# shadow holds the last real user selection (cold-tapped, silent) so the
+# visible highlight can be restored after "clear" wipes it during a rebuild
 add_box({'id': 'obj-c34-slotshadow', 'maxclass': 'newobj', 'text': 'int 0',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
          'patching_rect': [5100.0, 4540.0, 50.0, 22.0]})
 add_line('obj-pv2-slotmenu', 0, 'obj-c34-slotshadow', 1)  # cold tap, silent
-# separate shadow for the post-rebuild selection restore -- keeping this off
-# obj-c34-slotshadow's own outlet means banging it to restore the display
-# can never also fire the rename-store chain below (they'd otherwise share
-# one outlet's fan-out, with namepack picking up whatever stale/uninitialized
-# name happened to be in its cold inlet)
-add_box({'id': 'obj-c34-slotshadow-restore', 'maxclass': 'newobj', 'text': 'int 0',
-         'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
-         'patching_rect': [5100.0, 4570.0, 50.0, 22.0]})
-add_line('obj-pv2-slotmenu', 0, 'obj-c34-slotshadow-restore', 1)  # cold tap, silent
+add_box({'id': 'obj-c34-restore-pset', 'maxclass': 'newobj', 'text': 'prepend set',
+         'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [5100.0, 4570.0, 70.0, 22.0]})
+add_line('obj-c34-slotshadow', 0, 'obj-c34-restore-pset', 0)
+add_line('obj-c34-restore-pset', 0, 'obj-pv2-slotmenu', 0)
 
 # --- rename UI ---
 add_box({'id': 'obj-c34-name-cmt', 'maxclass': 'comment',
          'text': 'Rename selected preset (type name, press Enter/Tab) -- PC number prefix is automatic',
-         'patching_rect': [5100.0, 4580.0, 400.0, 20.0]})
+         'patching_rect': [5100.0, 4600.0, 400.0, 20.0]})
+# outputmode 1 as a creation-time attribute matches the user's own working
+# reference patch (obj-224 there); route text is kept regardless (also
+# present in that same reference patch) since outputmode does not remove
+# textedit's unconditional "text" selector -- confirmed both by Max forum
+# threads and by testing this exact patch.
 add_box({'id': 'obj-c34-nameedit', 'maxclass': 'textedit',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5100.0, 4600.0, 200.0, 22.0],
+         'outputmode': 1,
+         'patching_rect': [5100.0, 4620.0, 200.0, 22.0],
          'presentation': 1, 'presentation_rect': [750.0, 140.0, 240.0, 22.0]})
-# keymode set as a creation-time JSON attribute did NOT take effect in real
-# Max testing (Return still just inserted a line break); Max's own textedit
-# reference documents it as also settable by sending the attribute as a
-# message to the inlet ("the message keymode 1 causes..."), which is the
-# mechanism used here instead, fired once at load. This part IS confirmed
-# fixed: Return now commits.
 add_box({'id': 'obj-c34-nameedit-lb', 'maxclass': 'newobj', 'text': 'loadbang',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': ['bang'],
-         'patching_rect': [5260.0, 4600.0, 60.0, 22.0]})
+         'patching_rect': [5260.0, 4620.0, 60.0, 22.0]})
 add_box({'id': 'obj-c34-nameedit-keymode', 'maxclass': 'message', 'text': 'keymode 1',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5330.0, 4600.0, 70.0, 20.0]})
+         'patching_rect': [5330.0, 4620.0, 70.0, 20.0]})
 add_line('obj-c34-nameedit-lb', 0, 'obj-c34-nameedit-keymode', 0)
 add_line('obj-c34-nameedit-keymode', 0, 'obj-c34-nameedit', 0)
-# textedit ALWAYS prepends the literal selector "text" to whatever it
-# outputs, regardless of outputmode (an outputmode 1 message was tried and
-# had no effect -- confirmed by Max forum threads specifically about this
-# exact gotcha: "textedit prepends the word 'text' ... in front of whatever
-# you type"). The one confirmed, documented fix is `route text`, which
-# strips that selector and passes through only the real typed words (as a
-# list -- possibly more than one atom, since names can contain spaces).
 add_box({'id': 'obj-c34-route-text', 'maxclass': 'newobj', 'text': 'route text',
          'numinlets': 1, 'numoutlets': 2, 'outlettype': ['', ''],
-         'patching_rect': [5100.0, 4615.0, 90.0, 22.0]})
+         'patching_rect': [5100.0, 4650.0, 90.0, 22.0]})
 add_line('obj-c34-nameedit', 0, 'obj-c34-route-text', 0)
-# t b l b (right-to-left): out2 (FIRST) arms namepack's cold inlet with the
-# current slot number (a single int -- unlike the earlier failed attempt to
-# re-arm `prepend` with a multi-atom prefix, a single atom is exactly the
-# well-established "prepend store"/"prepend recall" idiom, just made
-# dynamic); out1 (SECOND) passes the real typed words through to namepack's
-# hot inlet, producing [slot, word1, word2, ...] into namecoll; out0 (LAST)
-# kicks off the rebuild once the store above has actually completed.
-add_box({'id': 'obj-c34-namet', 'maxclass': 'newobj', 'text': 't b l b',
-         'numinlets': 1, 'numoutlets': 3, 'outlettype': ['bang', '', 'bang'],
-         'patching_rect': [5100.0, 4630.0, 60.0, 22.0]})
-add_box({'id': 'obj-c34-slot1-name', 'maxclass': 'newobj', 'text': '+ 1',
+
+# current slot, 1-based, tracked continuously (no bang-fetch needed --
+# fires on every real selection change, which always happens well before
+# the user finishes typing a name, so pack's cold inlet is already correct
+# by the time Return commits the text)
+add_box({'id': 'obj-c34-slot1', 'maxclass': 'newobj', 'text': '+ 1',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
-         'patching_rect': [5100.0, 4660.0, 40.0, 22.0]})
-# bare prepend, dynamically re-armed with the (single-atom) slot number --
-# NOT the same technique that failed for the rebuild routine below, since
-# there the attempted dynamic prefix was multiple atoms ("append PC5 -").
-add_box({'id': 'obj-c34-namepack', 'maxclass': 'newobj', 'text': 'prepend',
+         'patching_rect': [5100.0, 4680.0, 40.0, 22.0]})
+add_line('obj-pv2-slotmenu', 0, 'obj-c34-slot1', 0)
+# pack s i (hot=text, cold=slot#) -> reorder via a message box into
+# pattrstorage's own "slotname <preset#> <name>" rename syntax -- mirrors
+# the reference patch's obj-22/obj-13 exactly
+add_box({'id': 'obj-c34-namepack', 'maxclass': 'newobj', 'text': 'pack s i',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5160.0, 4660.0, 90.0, 22.0]})
+         'patching_rect': [5100.0, 4710.0, 60.0, 22.0]})
+add_line('obj-c34-route-text', 0, 'obj-c34-namepack', 0)   # hot: typed text triggers
+add_line('obj-c34-slot1', 0, 'obj-c34-namepack', 1)        # cold: current slot#, continuously updated
+add_box({'id': 'obj-c34-namemsg', 'maxclass': 'message', 'text': 'slotname $2 $1',
+         'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [5100.0, 4740.0, 100.0, 20.0]})
+add_line('obj-c34-namepack', 0, 'obj-c34-namemsg', 0)
+# t b l (right-to-left): out1 (FIRST) sends the rename straight into
+# pattrstorage; out0 (SECOND) kicks off a refresh once the rename has
+# actually landed
+add_box({'id': 'obj-c34-name-t', 'maxclass': 'newobj', 'text': 't b l',
+         'numinlets': 1, 'numoutlets': 2, 'outlettype': ['bang', ''],
+         'patching_rect': [5100.0, 4770.0, 40.0, 22.0]})
+add_line('obj-c34-namemsg', 0, 'obj-c34-name-t', 0)
+add_line('obj-c34-name-t', 1, 'obj-pv2-pattrstorage', 0)   # FIRST: rename command
+add_line('obj-c34-name-t', 0, 'obj-c34-refresh-t', 0)      # SECOND: refresh (defined below)
 
-add_line('obj-c34-route-text', 0, 'obj-c34-namet', 0)
-add_line('obj-c34-namet', 2, 'obj-c34-slotshadow', 0)      # FIRST: bang -> current slot (0-based)
-add_line('obj-c34-slotshadow', 0, 'obj-c34-slot1-name', 0)
-add_line('obj-c34-slot1-name', 0, 'obj-c34-namepack', 1)   # cold: arm prefix = slot number
-add_line('obj-c34-namet', 1, 'obj-c34-namepack', 0)        # SECOND: hot -- triggers [slot, word1, ...]
-add_line('obj-c34-namepack', 0, 'obj-c34-namecoll', 0)     # store into coll
-
-# --- rebuild routine (shared by loadbang and rename) ---
+# --- refresh routine (shared by loadbang and rename) ---
 add_box({'id': 'obj-c34-lb2', 'maxclass': 'newobj', 'text': 'loadbang',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': ['bang'],
-         'patching_rect': [5100.0, 4700.0, 60.0, 22.0]})
-add_box({'id': 'obj-c34-rebuild-t', 'maxclass': 'newobj', 'text': 't b b',
+         'patching_rect': [5100.0, 4800.0, 60.0, 22.0]})
+# t b b (right-to-left): out1 (FIRST) clears the menu and opens the gate;
+# out0 (SECOND) asks pattrstorage for the current slot-name list
+add_box({'id': 'obj-c34-refresh-t', 'maxclass': 'newobj', 'text': 't b b',
          'numinlets': 1, 'numoutlets': 2, 'outlettype': ['bang', 'bang'],
-         'patching_rect': [5100.0, 4730.0, 50.0, 22.0]})
-add_box({'id': 'obj-c34-clear-msg', 'maxclass': 'message', 'text': 'clear',
+         'patching_rect': [5100.0, 4830.0, 50.0, 22.0]})
+add_line('obj-c34-lb2', 0, 'obj-c34-refresh-t', 0)
+add_box({'id': 'obj-c34-clearopen', 'maxclass': 'newobj', 'text': 't 1 clear',
+         'numinlets': 1, 'numoutlets': 2, 'outlettype': ['int', 'clear'],
+         'patching_rect': [5100.0, 4860.0, 60.0, 22.0]})
+add_line('obj-c34-refresh-t', 1, 'obj-c34-clearopen', 0)
+add_line('obj-c34-clearopen', 1, 'obj-pv2-slotmenu', 0)    # FIRST: "clear" -> wipe the menu
+add_box({'id': 'obj-c34-gate', 'maxclass': 'newobj', 'text': 'gate 1',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5100.0, 4760.0, 50.0, 20.0]})
-# uzi's args are <repetitions> <base>, NOT <repetitions> <outlet-index> --
-# there is no "which outlet" argument, the right outlet always carries the
-# counter regardless. "uzi 128 3" was misread as "counter on outlet 3" but
-# actually means "counter starting at 3", i.e. it counts 3..130, not 1..128
-# (confirmed against Max's own uzi reference). Omitting the second argument
-# defaults the base to 1, which is what's actually needed here.
-add_box({'id': 'obj-c34-rebuild-uzi', 'maxclass': 'newobj', 'text': 'uzi 128',
-         'numinlets': 2, 'numoutlets': 3, 'outlettype': ['bang', 'bang', 'int'],
-         'patching_rect': [5160.0, 4760.0, 70.0, 22.0]})
-add_box({'id': 'obj-c34-rebuild-split', 'maxclass': 'newobj', 'text': 't i i',
-         'numinlets': 1, 'numoutlets': 2, 'outlettype': ['int', 'int'],
-         'patching_rect': [5160.0, 4790.0, 50.0, 22.0]})
-add_box({'id': 'obj-c34-rebuild-minus1', 'maxclass': 'newobj', 'text': '- 1',
+         'patching_rect': [5100.0, 4890.0, 40.0, 22.0]})
+add_line('obj-c34-clearopen', 0, 'obj-c34-gate', 0)        # SECOND: "1" -> open the gate
+add_line('obj-c34-gate', 0, 'obj-pv2-slotmenu', 0)
+add_box({'id': 'obj-c34-getslotnamelist', 'maxclass': 'message', 'text': 'getslotnamelist',
+         'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [5170.0, 4860.0, 110.0, 20.0]})
+add_line('obj-c34-refresh-t', 0, 'obj-c34-getslotnamelist', 0)
+add_line('obj-c34-getslotnamelist', 0, 'obj-pv2-pattrstorage', 0)
+
+# --- parse pattrstorage's reply stream ---
+add_box({'id': 'obj-c34-slotname-route', 'maxclass': 'newobj', 'text': 'route slotname',
+         'numinlets': 2, 'numoutlets': 2, 'outlettype': ['', ''],
+         'patching_rect': [5170.0, 4920.0, 90.0, 22.0]})
+add_line('obj-pv2-pattrstorage', 0, 'obj-c34-slotname-route', 0)  # new tap on the existing outlet
+add_box({'id': 'obj-c34-slotname-done', 'maxclass': 'newobj', 'text': 'route done',
+         'numinlets': 2, 'numoutlets': 2, 'outlettype': ['', ''],
+         'patching_rect': [5170.0, 4950.0, 90.0, 22.0]})
+add_line('obj-c34-slotname-route', 0, 'obj-c34-slotname-done', 0)
+add_box({'id': 'obj-c34-gateclose', 'maxclass': 'newobj', 'text': 't 0',
+         'numinlets': 1, 'numoutlets': 1, 'outlettype': ['int'],
+         'patching_rect': [5170.0, 4980.0, 30.0, 22.0]})
+add_line('obj-c34-slotname-done', 0, 'obj-c34-gateclose', 0)  # matched "done" (bare bang)
+add_line('obj-c34-gateclose', 0, 'obj-c34-gate', 0)           # closes the gate
+add_line('obj-c34-slotname-done', 0, 'obj-c34-slotshadow', 0)  # ALSO restore the visible selection
+
+add_box({'id': 'obj-c34-slotname-unpack', 'maxclass': 'newobj', 'text': 'unpack 0 s',
+         'numinlets': 1, 'numoutlets': 2, 'outlettype': ['int', ''],
+         'patching_rect': [5250.0, 4980.0, 70.0, 22.0]})
+add_line('obj-c34-slotname-done', 1, 'obj-c34-slotname-unpack', 0)  # unmatched: "<n> <name>"
+add_box({'id': 'obj-c34-slotname-minus1', 'maxclass': 'newobj', 'text': '- 1',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
-         'patching_rect': [5160.0, 4820.0, 40.0, 22.0]})
-# single-specifier sprintf builds ONLY "append PC<n> -" (proven pattern,
-# same as the existing `sprintf send Bus%d_X` objects). Combining this with
-# the coll-stored name is now done with `zl.join` instead of `%s` or
-# `prepend`: names can be more than one atom (spaces are separate atoms once
-# `route text` strips textedit's "text" selector), and both %s (exactly one
-# atom) and a dynamically re-armed `prepend` (confirmed broken for a
-# multi-atom prefix in real Max testing) silently drop anything past the
-# first atom. `zl.join` concatenates two LISTS of any length -- left/hot
-# inlet is the first segment and triggers output, right/cold inlet is the
-# second segment -- with no such limitation.
-add_box({'id': 'obj-c34-rebuild-sprintf', 'maxclass': 'newobj',
+         'patching_rect': [5250.0, 5010.0, 40.0, 22.0]})
+add_line('obj-c34-slotname-unpack', 0, 'obj-c34-slotname-minus1', 0)  # SECOND (int, leftmost)
+# single-specifier sprintf builds "append PC<n> -" (proven pattern, same as
+# the existing `sprintf send Bus%d_X` objects). zl.join then concatenates
+# that with the (possibly multi-atom) name from unpack -- NOT %s (exactly
+# one atom) and NOT a dynamically re-armed `prepend` (confirmed broken for
+# a multi-atom prefix in real Max testing).
+add_box({'id': 'obj-c34-slotname-sprintf', 'maxclass': 'newobj',
          'text': 'sprintf append PC%ld -',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5160.0, 4850.0, 100.0, 22.0]})
-add_box({'id': 'obj-c34-rebuild-zljoin', 'maxclass': 'newobj', 'text': 'zl.join',
+         'patching_rect': [5250.0, 5040.0, 100.0, 22.0]})
+add_line('obj-c34-slotname-minus1', 0, 'obj-c34-slotname-sprintf', 0)
+add_box({'id': 'obj-c34-slotname-zljoin', 'maxclass': 'newobj', 'text': 'zl.join',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5160.0, 4880.0, 60.0, 22.0]})
-
-add_line('obj-c34-lb2', 0, 'obj-c34-rebuild-t', 0)
-add_line('obj-c34-namet', 0, 'obj-c34-rebuild-t', 0)       # LAST (rename path): kick off rebuild
-add_line('obj-c34-rebuild-t', 1, 'obj-c34-clear-msg', 0)   # FIRST: clear
-add_line('obj-c34-clear-msg', 0, 'obj-pv2-slotmenu', 0)
-add_line('obj-c34-rebuild-t', 0, 'obj-c34-rebuild-uzi', 0) # SECOND: start loop
-
-add_line('obj-c34-rebuild-uzi', 2, 'obj-c34-rebuild-split', 0)  # counter 1..128
-add_line('obj-c34-rebuild-split', 1, 'obj-c34-namecoll', 0)     # FIRST: lookup stored name
-add_line('obj-c34-namecoll', 0, 'obj-c34-rebuild-zljoin', 1)    # cold: 2nd segment = name
-add_line('obj-c34-rebuild-split', 0, 'obj-c34-rebuild-minus1', 0)  # SECOND: pc# path
-add_line('obj-c34-rebuild-minus1', 0, 'obj-c34-rebuild-sprintf', 0)
-add_line('obj-c34-rebuild-sprintf', 0, 'obj-c34-rebuild-zljoin', 0)  # hot: 1st segment, triggers join
-add_line('obj-c34-rebuild-zljoin', 0, 'obj-pv2-slotmenu', 0)
-
-# restore the visible selection after the rebuild (clear wipes it)
-add_box({'id': 'obj-c34-restore-pset', 'maxclass': 'newobj', 'text': 'prepend set',
-         'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5260.0, 4760.0, 70.0, 22.0]})
-add_line('obj-c34-rebuild-uzi', 1, 'obj-c34-slotshadow-restore', 0)  # done-bang -> re-output current slot
-add_line('obj-c34-slotshadow-restore', 0, 'obj-c34-restore-pset', 0)
-add_line('obj-c34-restore-pset', 0, 'obj-pv2-slotmenu', 0)
+         'patching_rect': [5250.0, 5070.0, 60.0, 22.0]})
+add_line('obj-c34-slotname-unpack', 1, 'obj-c34-slotname-zljoin', 1)   # FIRST (symbol, rightmost): 2nd segment
+add_line('obj-c34-slotname-sprintf', 0, 'obj-c34-slotname-zljoin', 0)  # SECOND: 1st segment, triggers join
+add_line('obj-c34-slotname-zljoin', 0, 'obj-c34-gate', 1)              # data -> gate (passes if open)
 
 # =====================================================================
 with open(DST, 'w') as f:

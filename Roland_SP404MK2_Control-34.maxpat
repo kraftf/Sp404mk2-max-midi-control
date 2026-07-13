@@ -78130,804 +78130,6 @@
    },
    {
     "box": {
-     "id": "obj-c34-namecoll",
-     "maxclass": "newobj",
-     "text": "coll obj-c34-namecoll @embed 1",
-     "numinlets": 1,
-     "numoutlets": 4,
-     "outlettype": [
-      "",
-      "",
-      "",
-      ""
-     ],
-     "saved_object_attributes": {
-      "embed": 1,
-      "precision": 6
-     },
-     "patching_rect": [
-      5100.0,
-      4500.0,
-      180.0,
-      22.0
-     ],
-     "coll_data": {
-      "count": 128,
-      "data": [
-       {
-        "key": 1,
-        "value": [
-         "Preset1"
-        ]
-       },
-       {
-        "key": 2,
-        "value": [
-         "Preset2"
-        ]
-       },
-       {
-        "key": 3,
-        "value": [
-         "Preset3"
-        ]
-       },
-       {
-        "key": 4,
-        "value": [
-         "Preset4"
-        ]
-       },
-       {
-        "key": 5,
-        "value": [
-         "Preset5"
-        ]
-       },
-       {
-        "key": 6,
-        "value": [
-         "Preset6"
-        ]
-       },
-       {
-        "key": 7,
-        "value": [
-         "Preset7"
-        ]
-       },
-       {
-        "key": 8,
-        "value": [
-         "Preset8"
-        ]
-       },
-       {
-        "key": 9,
-        "value": [
-         "Preset9"
-        ]
-       },
-       {
-        "key": 10,
-        "value": [
-         "Preset10"
-        ]
-       },
-       {
-        "key": 11,
-        "value": [
-         "Preset11"
-        ]
-       },
-       {
-        "key": 12,
-        "value": [
-         "Preset12"
-        ]
-       },
-       {
-        "key": 13,
-        "value": [
-         "Preset13"
-        ]
-       },
-       {
-        "key": 14,
-        "value": [
-         "Preset14"
-        ]
-       },
-       {
-        "key": 15,
-        "value": [
-         "Preset15"
-        ]
-       },
-       {
-        "key": 16,
-        "value": [
-         "Preset16"
-        ]
-       },
-       {
-        "key": 17,
-        "value": [
-         "Preset17"
-        ]
-       },
-       {
-        "key": 18,
-        "value": [
-         "Preset18"
-        ]
-       },
-       {
-        "key": 19,
-        "value": [
-         "Preset19"
-        ]
-       },
-       {
-        "key": 20,
-        "value": [
-         "Preset20"
-        ]
-       },
-       {
-        "key": 21,
-        "value": [
-         "Preset21"
-        ]
-       },
-       {
-        "key": 22,
-        "value": [
-         "Preset22"
-        ]
-       },
-       {
-        "key": 23,
-        "value": [
-         "Preset23"
-        ]
-       },
-       {
-        "key": 24,
-        "value": [
-         "Preset24"
-        ]
-       },
-       {
-        "key": 25,
-        "value": [
-         "Preset25"
-        ]
-       },
-       {
-        "key": 26,
-        "value": [
-         "Preset26"
-        ]
-       },
-       {
-        "key": 27,
-        "value": [
-         "Preset27"
-        ]
-       },
-       {
-        "key": 28,
-        "value": [
-         "Preset28"
-        ]
-       },
-       {
-        "key": 29,
-        "value": [
-         "Preset29"
-        ]
-       },
-       {
-        "key": 30,
-        "value": [
-         "Preset30"
-        ]
-       },
-       {
-        "key": 31,
-        "value": [
-         "Preset31"
-        ]
-       },
-       {
-        "key": 32,
-        "value": [
-         "Preset32"
-        ]
-       },
-       {
-        "key": 33,
-        "value": [
-         "Preset33"
-        ]
-       },
-       {
-        "key": 34,
-        "value": [
-         "Preset34"
-        ]
-       },
-       {
-        "key": 35,
-        "value": [
-         "Preset35"
-        ]
-       },
-       {
-        "key": 36,
-        "value": [
-         "Preset36"
-        ]
-       },
-       {
-        "key": 37,
-        "value": [
-         "Preset37"
-        ]
-       },
-       {
-        "key": 38,
-        "value": [
-         "Preset38"
-        ]
-       },
-       {
-        "key": 39,
-        "value": [
-         "Preset39"
-        ]
-       },
-       {
-        "key": 40,
-        "value": [
-         "Preset40"
-        ]
-       },
-       {
-        "key": 41,
-        "value": [
-         "Preset41"
-        ]
-       },
-       {
-        "key": 42,
-        "value": [
-         "Preset42"
-        ]
-       },
-       {
-        "key": 43,
-        "value": [
-         "Preset43"
-        ]
-       },
-       {
-        "key": 44,
-        "value": [
-         "Preset44"
-        ]
-       },
-       {
-        "key": 45,
-        "value": [
-         "Preset45"
-        ]
-       },
-       {
-        "key": 46,
-        "value": [
-         "Preset46"
-        ]
-       },
-       {
-        "key": 47,
-        "value": [
-         "Preset47"
-        ]
-       },
-       {
-        "key": 48,
-        "value": [
-         "Preset48"
-        ]
-       },
-       {
-        "key": 49,
-        "value": [
-         "Preset49"
-        ]
-       },
-       {
-        "key": 50,
-        "value": [
-         "Preset50"
-        ]
-       },
-       {
-        "key": 51,
-        "value": [
-         "Preset51"
-        ]
-       },
-       {
-        "key": 52,
-        "value": [
-         "Preset52"
-        ]
-       },
-       {
-        "key": 53,
-        "value": [
-         "Preset53"
-        ]
-       },
-       {
-        "key": 54,
-        "value": [
-         "Preset54"
-        ]
-       },
-       {
-        "key": 55,
-        "value": [
-         "Preset55"
-        ]
-       },
-       {
-        "key": 56,
-        "value": [
-         "Preset56"
-        ]
-       },
-       {
-        "key": 57,
-        "value": [
-         "Preset57"
-        ]
-       },
-       {
-        "key": 58,
-        "value": [
-         "Preset58"
-        ]
-       },
-       {
-        "key": 59,
-        "value": [
-         "Preset59"
-        ]
-       },
-       {
-        "key": 60,
-        "value": [
-         "Preset60"
-        ]
-       },
-       {
-        "key": 61,
-        "value": [
-         "Preset61"
-        ]
-       },
-       {
-        "key": 62,
-        "value": [
-         "Preset62"
-        ]
-       },
-       {
-        "key": 63,
-        "value": [
-         "Preset63"
-        ]
-       },
-       {
-        "key": 64,
-        "value": [
-         "Preset64"
-        ]
-       },
-       {
-        "key": 65,
-        "value": [
-         "Preset65"
-        ]
-       },
-       {
-        "key": 66,
-        "value": [
-         "Preset66"
-        ]
-       },
-       {
-        "key": 67,
-        "value": [
-         "Preset67"
-        ]
-       },
-       {
-        "key": 68,
-        "value": [
-         "Preset68"
-        ]
-       },
-       {
-        "key": 69,
-        "value": [
-         "Preset69"
-        ]
-       },
-       {
-        "key": 70,
-        "value": [
-         "Preset70"
-        ]
-       },
-       {
-        "key": 71,
-        "value": [
-         "Preset71"
-        ]
-       },
-       {
-        "key": 72,
-        "value": [
-         "Preset72"
-        ]
-       },
-       {
-        "key": 73,
-        "value": [
-         "Preset73"
-        ]
-       },
-       {
-        "key": 74,
-        "value": [
-         "Preset74"
-        ]
-       },
-       {
-        "key": 75,
-        "value": [
-         "Preset75"
-        ]
-       },
-       {
-        "key": 76,
-        "value": [
-         "Preset76"
-        ]
-       },
-       {
-        "key": 77,
-        "value": [
-         "Preset77"
-        ]
-       },
-       {
-        "key": 78,
-        "value": [
-         "Preset78"
-        ]
-       },
-       {
-        "key": 79,
-        "value": [
-         "Preset79"
-        ]
-       },
-       {
-        "key": 80,
-        "value": [
-         "Preset80"
-        ]
-       },
-       {
-        "key": 81,
-        "value": [
-         "Preset81"
-        ]
-       },
-       {
-        "key": 82,
-        "value": [
-         "Preset82"
-        ]
-       },
-       {
-        "key": 83,
-        "value": [
-         "Preset83"
-        ]
-       },
-       {
-        "key": 84,
-        "value": [
-         "Preset84"
-        ]
-       },
-       {
-        "key": 85,
-        "value": [
-         "Preset85"
-        ]
-       },
-       {
-        "key": 86,
-        "value": [
-         "Preset86"
-        ]
-       },
-       {
-        "key": 87,
-        "value": [
-         "Preset87"
-        ]
-       },
-       {
-        "key": 88,
-        "value": [
-         "Preset88"
-        ]
-       },
-       {
-        "key": 89,
-        "value": [
-         "Preset89"
-        ]
-       },
-       {
-        "key": 90,
-        "value": [
-         "Preset90"
-        ]
-       },
-       {
-        "key": 91,
-        "value": [
-         "Preset91"
-        ]
-       },
-       {
-        "key": 92,
-        "value": [
-         "Preset92"
-        ]
-       },
-       {
-        "key": 93,
-        "value": [
-         "Preset93"
-        ]
-       },
-       {
-        "key": 94,
-        "value": [
-         "Preset94"
-        ]
-       },
-       {
-        "key": 95,
-        "value": [
-         "Preset95"
-        ]
-       },
-       {
-        "key": 96,
-        "value": [
-         "Preset96"
-        ]
-       },
-       {
-        "key": 97,
-        "value": [
-         "Preset97"
-        ]
-       },
-       {
-        "key": 98,
-        "value": [
-         "Preset98"
-        ]
-       },
-       {
-        "key": 99,
-        "value": [
-         "Preset99"
-        ]
-       },
-       {
-        "key": 100,
-        "value": [
-         "Preset100"
-        ]
-       },
-       {
-        "key": 101,
-        "value": [
-         "Preset101"
-        ]
-       },
-       {
-        "key": 102,
-        "value": [
-         "Preset102"
-        ]
-       },
-       {
-        "key": 103,
-        "value": [
-         "Preset103"
-        ]
-       },
-       {
-        "key": 104,
-        "value": [
-         "Preset104"
-        ]
-       },
-       {
-        "key": 105,
-        "value": [
-         "Preset105"
-        ]
-       },
-       {
-        "key": 106,
-        "value": [
-         "Preset106"
-        ]
-       },
-       {
-        "key": 107,
-        "value": [
-         "Preset107"
-        ]
-       },
-       {
-        "key": 108,
-        "value": [
-         "Preset108"
-        ]
-       },
-       {
-        "key": 109,
-        "value": [
-         "Preset109"
-        ]
-       },
-       {
-        "key": 110,
-        "value": [
-         "Preset110"
-        ]
-       },
-       {
-        "key": 111,
-        "value": [
-         "Preset111"
-        ]
-       },
-       {
-        "key": 112,
-        "value": [
-         "Preset112"
-        ]
-       },
-       {
-        "key": 113,
-        "value": [
-         "Preset113"
-        ]
-       },
-       {
-        "key": 114,
-        "value": [
-         "Preset114"
-        ]
-       },
-       {
-        "key": 115,
-        "value": [
-         "Preset115"
-        ]
-       },
-       {
-        "key": 116,
-        "value": [
-         "Preset116"
-        ]
-       },
-       {
-        "key": 117,
-        "value": [
-         "Preset117"
-        ]
-       },
-       {
-        "key": 118,
-        "value": [
-         "Preset118"
-        ]
-       },
-       {
-        "key": 119,
-        "value": [
-         "Preset119"
-        ]
-       },
-       {
-        "key": 120,
-        "value": [
-         "Preset120"
-        ]
-       },
-       {
-        "key": 121,
-        "value": [
-         "Preset121"
-        ]
-       },
-       {
-        "key": 122,
-        "value": [
-         "Preset122"
-        ]
-       },
-       {
-        "key": 123,
-        "value": [
-         "Preset123"
-        ]
-       },
-       {
-        "key": 124,
-        "value": [
-         "Preset124"
-        ]
-       },
-       {
-        "key": 125,
-        "value": [
-         "Preset125"
-        ]
-       },
-       {
-        "key": 126,
-        "value": [
-         "Preset126"
-        ]
-       },
-       {
-        "key": 127,
-        "value": [
-         "Preset127"
-        ]
-       },
-       {
-        "key": 128,
-        "value": [
-         "Preset128"
-        ]
-       }
-      ]
-     }
-    }
-   },
-   {
-    "box": {
      "id": "obj-c34-slotshadow",
      "maxclass": "newobj",
      "text": "int 0",
@@ -78946,18 +78148,18 @@
    },
    {
     "box": {
-     "id": "obj-c34-slotshadow-restore",
+     "id": "obj-c34-restore-pset",
      "maxclass": "newobj",
-     "text": "int 0",
-     "numinlets": 2,
+     "text": "prepend set",
+     "numinlets": 1,
      "numoutlets": 1,
      "outlettype": [
-      "int"
+      ""
      ],
      "patching_rect": [
       5100.0,
       4570.0,
-      50.0,
+      70.0,
       22.0
      ]
     }
@@ -78969,7 +78171,7 @@
      "text": "Rename selected preset (type name, press Enter/Tab) -- PC number prefix is automatic",
      "patching_rect": [
       5100.0,
-      4580.0,
+      4600.0,
       400.0,
       20.0
      ]
@@ -78984,9 +78186,10 @@
      "outlettype": [
       ""
      ],
+     "outputmode": 1,
      "patching_rect": [
       5100.0,
-      4600.0,
+      4620.0,
       200.0,
       22.0
      ],
@@ -79011,7 +78214,7 @@
      ],
      "patching_rect": [
       5260.0,
-      4600.0,
+      4620.0,
       60.0,
       22.0
      ]
@@ -79029,7 +78232,7 @@
      ],
      "patching_rect": [
       5330.0,
-      4600.0,
+      4620.0,
       70.0,
       20.0
      ]
@@ -79048,7 +78251,7 @@
      ],
      "patching_rect": [
       5100.0,
-      4615.0,
+      4650.0,
       90.0,
       22.0
      ]
@@ -79056,27 +78259,7 @@
    },
    {
     "box": {
-     "id": "obj-c34-namet",
-     "maxclass": "newobj",
-     "text": "t b l b",
-     "numinlets": 1,
-     "numoutlets": 3,
-     "outlettype": [
-      "bang",
-      "",
-      "bang"
-     ],
-     "patching_rect": [
-      5100.0,
-      4630.0,
-      60.0,
-      22.0
-     ]
-    }
-   },
-   {
-    "box": {
-     "id": "obj-c34-slot1-name",
+     "id": "obj-c34-slot1",
      "maxclass": "newobj",
      "text": "+ 1",
      "numinlets": 2,
@@ -79086,7 +78269,7 @@
      ],
      "patching_rect": [
       5100.0,
-      4660.0,
+      4680.0,
       40.0,
       22.0
      ]
@@ -79096,16 +78279,53 @@
     "box": {
      "id": "obj-c34-namepack",
      "maxclass": "newobj",
-     "text": "prepend",
+     "text": "pack s i",
      "numinlets": 2,
      "numoutlets": 1,
      "outlettype": [
       ""
      ],
      "patching_rect": [
-      5160.0,
-      4660.0,
-      90.0,
+      5100.0,
+      4710.0,
+      60.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-namemsg",
+     "maxclass": "message",
+     "text": "slotname $2 $1",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ],
+     "patching_rect": [
+      5100.0,
+      4740.0,
+      100.0,
+      20.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-name-t",
+     "maxclass": "newobj",
+     "text": "t b l",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "outlettype": [
+      "bang",
+      ""
+     ],
+     "patching_rect": [
+      5100.0,
+      4770.0,
+      40.0,
       22.0
      ]
     }
@@ -79122,7 +78342,7 @@
      ],
      "patching_rect": [
       5100.0,
-      4700.0,
+      4800.0,
       60.0,
       22.0
      ]
@@ -79130,7 +78350,7 @@
    },
    {
     "box": {
-     "id": "obj-c34-rebuild-t",
+     "id": "obj-c34-refresh-t",
      "maxclass": "newobj",
      "text": "t b b",
      "numinlets": 1,
@@ -79141,7 +78361,7 @@
      ],
      "patching_rect": [
       5100.0,
-      4730.0,
+      4830.0,
       50.0,
       22.0
      ]
@@ -79149,9 +78369,28 @@
    },
    {
     "box": {
-     "id": "obj-c34-clear-msg",
-     "maxclass": "message",
-     "text": "clear",
+     "id": "obj-c34-clearopen",
+     "maxclass": "newobj",
+     "text": "t 1 clear",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "outlettype": [
+      "int",
+      "clear"
+     ],
+     "patching_rect": [
+      5100.0,
+      4860.0,
+      60.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-gate",
+     "maxclass": "newobj",
+     "text": "gate 1",
      "numinlets": 2,
      "numoutlets": 1,
      "outlettype": [
@@ -79159,27 +78398,100 @@
      ],
      "patching_rect": [
       5100.0,
-      4760.0,
-      50.0,
+      4890.0,
+      40.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-getslotnamelist",
+     "maxclass": "message",
+     "text": "getslotnamelist",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ],
+     "patching_rect": [
+      5170.0,
+      4860.0,
+      110.0,
       20.0
      ]
     }
    },
    {
     "box": {
-     "id": "obj-c34-rebuild-uzi",
+     "id": "obj-c34-slotname-route",
      "maxclass": "newobj",
-     "text": "uzi 128",
+     "text": "route slotname",
      "numinlets": 2,
-     "numoutlets": 3,
+     "numoutlets": 2,
      "outlettype": [
-      "bang",
-      "bang",
+      "",
+      ""
+     ],
+     "patching_rect": [
+      5170.0,
+      4920.0,
+      90.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-slotname-done",
+     "maxclass": "newobj",
+     "text": "route done",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "outlettype": [
+      "",
+      ""
+     ],
+     "patching_rect": [
+      5170.0,
+      4950.0,
+      90.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-gateclose",
+     "maxclass": "newobj",
+     "text": "t 0",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "outlettype": [
       "int"
      ],
      "patching_rect": [
-      5160.0,
-      4760.0,
+      5170.0,
+      4980.0,
+      30.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-slotname-unpack",
+     "maxclass": "newobj",
+     "text": "unpack 0 s",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "outlettype": [
+      "int",
+      ""
+     ],
+     "patching_rect": [
+      5250.0,
+      4980.0,
       70.0,
       22.0
      ]
@@ -79187,26 +78499,7 @@
    },
    {
     "box": {
-     "id": "obj-c34-rebuild-split",
-     "maxclass": "newobj",
-     "text": "t i i",
-     "numinlets": 1,
-     "numoutlets": 2,
-     "outlettype": [
-      "int",
-      "int"
-     ],
-     "patching_rect": [
-      5160.0,
-      4790.0,
-      50.0,
-      22.0
-     ]
-    }
-   },
-   {
-    "box": {
-     "id": "obj-c34-rebuild-minus1",
+     "id": "obj-c34-slotname-minus1",
      "maxclass": "newobj",
      "text": "- 1",
      "numinlets": 2,
@@ -79215,8 +78508,8 @@
       "int"
      ],
      "patching_rect": [
-      5160.0,
-      4820.0,
+      5250.0,
+      5010.0,
       40.0,
       22.0
      ]
@@ -79224,7 +78517,7 @@
    },
    {
     "box": {
-     "id": "obj-c34-rebuild-sprintf",
+     "id": "obj-c34-slotname-sprintf",
      "maxclass": "newobj",
      "text": "sprintf append PC%ld -",
      "numinlets": 1,
@@ -79233,8 +78526,8 @@
       ""
      ],
      "patching_rect": [
-      5160.0,
-      4850.0,
+      5250.0,
+      5040.0,
       100.0,
       22.0
      ]
@@ -79242,7 +78535,7 @@
    },
    {
     "box": {
-     "id": "obj-c34-rebuild-zljoin",
+     "id": "obj-c34-slotname-zljoin",
      "maxclass": "newobj",
      "text": "zl.join",
      "numinlets": 2,
@@ -79251,27 +78544,9 @@
       ""
      ],
      "patching_rect": [
-      5160.0,
-      4880.0,
+      5250.0,
+      5070.0,
       60.0,
-      22.0
-     ]
-    }
-   },
-   {
-    "box": {
-     "id": "obj-c34-restore-pset",
-     "maxclass": "newobj",
-     "text": "prepend set",
-     "numinlets": 1,
-     "numoutlets": 1,
-     "outlettype": [
-      ""
-     ],
-     "patching_rect": [
-      5260.0,
-      4760.0,
-      70.0,
       22.0
      ]
     }
@@ -94021,12 +93296,24 @@
    {
     "patchline": {
      "source": [
-      "obj-pv2-slotmenu",
+      "obj-c34-slotshadow",
       0
      ],
      "destination": [
-      "obj-c34-slotshadow-restore",
-      1
+      "obj-c34-restore-pset",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-restore-pset",
+      0
+     ],
+     "destination": [
+      "obj-pv2-slotmenu",
+      0
      ]
     }
    },
@@ -94069,11 +93356,23 @@
    {
     "patchline": {
      "source": [
+      "obj-pv2-slotmenu",
+      0
+     ],
+     "destination": [
+      "obj-c34-slot1",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
       "obj-c34-route-text",
       0
      ],
      "destination": [
-      "obj-c34-namet",
+      "obj-c34-namepack",
       0
      ]
     }
@@ -94081,31 +93380,7 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-namet",
-      2
-     ],
-     "destination": [
-      "obj-c34-slotshadow",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-slotshadow",
-      0
-     ],
-     "destination": [
-      "obj-c34-slot1-name",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-slot1-name",
+      "obj-c34-slot1",
       0
      ],
      "destination": [
@@ -94117,11 +93392,11 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-namet",
-      1
+      "obj-c34-namepack",
+      0
      ],
      "destination": [
-      "obj-c34-namepack",
+      "obj-c34-namemsg",
       0
      ]
     }
@@ -94129,11 +93404,35 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-namepack",
+      "obj-c34-namemsg",
       0
      ],
      "destination": [
-      "obj-c34-namecoll",
+      "obj-c34-name-t",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-name-t",
+      1
+     ],
+     "destination": [
+      "obj-pv2-pattrstorage",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-name-t",
+      0
+     ],
+     "destination": [
+      "obj-c34-refresh-t",
       0
      ]
     }
@@ -94145,7 +93444,7 @@
       0
      ],
      "destination": [
-      "obj-c34-rebuild-t",
+      "obj-c34-refresh-t",
       0
      ]
     }
@@ -94153,23 +93452,11 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-namet",
-      0
-     ],
-     "destination": [
-      "obj-c34-rebuild-t",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-rebuild-t",
+      "obj-c34-refresh-t",
       1
      ],
      "destination": [
-      "obj-c34-clear-msg",
+      "obj-c34-clearopen",
       0
      ]
     }
@@ -94177,7 +93464,31 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-clear-msg",
+      "obj-c34-clearopen",
+      1
+     ],
+     "destination": [
+      "obj-pv2-slotmenu",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-clearopen",
+      0
+     ],
+     "destination": [
+      "obj-c34-gate",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-gate",
       0
      ],
      "destination": [
@@ -94189,11 +93500,11 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-rebuild-t",
+      "obj-c34-refresh-t",
       0
      ],
      "destination": [
-      "obj-c34-rebuild-uzi",
+      "obj-c34-getslotnamelist",
       0
      ]
     }
@@ -94201,11 +93512,11 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-rebuild-uzi",
-      2
+      "obj-c34-getslotnamelist",
+      0
      ],
      "destination": [
-      "obj-c34-rebuild-split",
+      "obj-pv2-pattrstorage",
       0
      ]
     }
@@ -94213,11 +93524,71 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-rebuild-split",
+      "obj-pv2-pattrstorage",
+      0
+     ],
+     "destination": [
+      "obj-c34-slotname-route",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-slotname-route",
+      0
+     ],
+     "destination": [
+      "obj-c34-slotname-done",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-slotname-done",
+      0
+     ],
+     "destination": [
+      "obj-c34-gateclose",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-gateclose",
+      0
+     ],
+     "destination": [
+      "obj-c34-gate",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-slotname-done",
+      0
+     ],
+     "destination": [
+      "obj-c34-slotshadow",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-slotname-done",
       1
      ],
      "destination": [
-      "obj-c34-namecoll",
+      "obj-c34-slotname-unpack",
       0
      ]
     }
@@ -94225,11 +93596,35 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-namecoll",
+      "obj-c34-slotname-unpack",
       0
      ],
      "destination": [
-      "obj-c34-rebuild-zljoin",
+      "obj-c34-slotname-minus1",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-slotname-minus1",
+      0
+     ],
+     "destination": [
+      "obj-c34-slotname-sprintf",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-slotname-unpack",
+      1
+     ],
+     "destination": [
+      "obj-c34-slotname-zljoin",
       1
      ]
     }
@@ -94237,11 +93632,11 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-rebuild-split",
+      "obj-c34-slotname-sprintf",
       0
      ],
      "destination": [
-      "obj-c34-rebuild-minus1",
+      "obj-c34-slotname-zljoin",
       0
      ]
     }
@@ -94249,72 +93644,12 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-rebuild-minus1",
+      "obj-c34-slotname-zljoin",
       0
      ],
      "destination": [
-      "obj-c34-rebuild-sprintf",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-rebuild-sprintf",
-      0
-     ],
-     "destination": [
-      "obj-c34-rebuild-zljoin",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-rebuild-zljoin",
-      0
-     ],
-     "destination": [
-      "obj-pv2-slotmenu",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-rebuild-uzi",
+      "obj-c34-gate",
       1
-     ],
-     "destination": [
-      "obj-c34-slotshadow-restore",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-slotshadow-restore",
-      0
-     ],
-     "destination": [
-      "obj-c34-restore-pset",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-restore-pset",
-      0
-     ],
-     "destination": [
-      "obj-pv2-slotmenu",
-      0
      ]
     }
    }
