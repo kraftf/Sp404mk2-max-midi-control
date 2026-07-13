@@ -79562,7 +79562,7 @@
     "box": {
      "id": "obj-c35-pcin-cmt",
      "maxclass": "comment",
-     "text": "Program Change Input Device (preset recall only -- independent of the MIDI Control Input Device above)",
+     "text": "Program Change Input Device (preset recall)",
      "patching_rect": [
       40.0,
       5400.0,
@@ -79571,9 +79571,9 @@
      ],
      "presentation": 1,
      "presentation_rect": [
-      20.0,
-      715.0,
-      420.0,
+      750.0,
+      165.0,
+      250.0,
       16.0
      ]
     }
@@ -79715,8 +79715,8 @@
      ],
      "presentation": 1,
      "presentation_rect": [
-      20.0,
-      735.0,
+      750.0,
+      183.0,
       200.0,
       22.0
      ]
@@ -80383,6 +80383,132 @@
    },
    {
     "box": {
+     "id": "obj-c35-ccdevice",
+     "maxclass": "newobj",
+     "text": "coll obj-c35-ccdevice @embed 1",
+     "numinlets": 1,
+     "numoutlets": 4,
+     "outlettype": [
+      "",
+      "",
+      "",
+      ""
+     ],
+     "saved_object_attributes": {
+      "embed": 1,
+      "precision": 6
+     },
+     "patching_rect": [
+      5540.0,
+      5700.0,
+      200.0,
+      22.0
+     ],
+     "coll_data": {
+      "count": 16,
+      "data": [
+       {
+        "key": 1,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 2,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 3,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 4,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 5,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 6,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 7,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 8,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 9,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 10,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 11,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 12,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 13,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 14,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 15,
+        "value": [
+         "(unset)"
+        ]
+       },
+       {
+        "key": 16,
+        "value": [
+         "(unset)"
+        ]
+       }
+      ]
+     }
+    }
+   },
+   {
+    "box": {
      "id": "obj-c35-ccshadow-save",
      "maxclass": "newobj",
      "text": "int 0",
@@ -80475,10 +80601,11 @@
     "box": {
      "id": "obj-c35-save-t",
      "maxclass": "newobj",
-     "text": "t b b b b b b b b b",
+     "text": "t b b b b b b b b b b",
      "numinlets": 1,
-     "numoutlets": 9,
+     "numoutlets": 10,
      "outlettype": [
+      "bang",
       "bang",
       "bang",
       "bang",
@@ -80492,7 +80619,7 @@
      "patching_rect": [
       5100.0,
       5820.0,
-      140.0,
+      160.0,
       22.0
      ]
     }
@@ -80529,6 +80656,24 @@
       5100.0,
       5880.0,
       40.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c35-savedev-zljoin",
+     "maxclass": "newobj",
+     "text": "zl.join",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ],
+     "patching_rect": [
+      5300.0,
+      5910.0,
+      160.0,
       22.0
      ]
     }
@@ -80590,6 +80735,24 @@
       5100.0,
       5980.0,
       160.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c35-rcl-dev-prepend",
+     "maxclass": "newobj",
+     "text": "prepend symbol",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ],
+     "patching_rect": [
+      5300.0,
+      5980.0,
+      100.0,
       22.0
      ]
     }
@@ -96433,6 +96596,54 @@
    {
     "patchline": {
      "source": [
+      "obj-c35-save-t",
+      9
+     ],
+     "destination": [
+      "obj-c34-indev",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-indev",
+      1
+     ],
+     "destination": [
+      "obj-c35-savedev-zljoin",
+      1
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c35-save-slotplus1",
+      0
+     ],
+     "destination": [
+      "obj-c35-savedev-zljoin",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c35-savedev-zljoin",
+      0
+     ],
+     "destination": [
+      "obj-c35-ccdevice",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
       "obj-c35-ccrclbtn",
       0
      ],
@@ -96582,6 +96793,42 @@
      ],
      "destination": [
       "obj-c34-ccsel-onoff",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c35-rcl-slotplus1",
+      0
+     ],
+     "destination": [
+      "obj-c35-ccdevice",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c35-ccdevice",
+      0
+     ],
+     "destination": [
+      "obj-c35-rcl-dev-prepend",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c35-rcl-dev-prepend",
+      0
+     ],
+     "destination": [
+      "obj-c34-indev",
       0
      ]
     }

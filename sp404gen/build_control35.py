@@ -59,6 +59,36 @@ Builds Roland_SP404MK2_Control-35.maxpat from Control-34. Three requests:
    baseline UI -- is flagged as a separate follow-up decision for the user,
    not bundled into this risk surface. See SESSION_STATE.md.
 
+4. FIXED AFTER FIRST MAX TEST (same session): RECALL was wired straight into
+   an `int` object, which doesn't understand the literal message-box symbol
+   "RECALL" (confirmed console error) -- routed through a `t b` first, same
+   as SAVE already did. Rename used `pack s i`, which (confirmed via Cycling
+   '74's own pack documentation) spills extra atoms from a multi-word name
+   into the next inlet, clobbering the int-typed slot number for any 2+-word
+   rename -- replaced with `zl.join`, which has no per-inlet atom-count
+   limit. See the inline comments at each fix site and SESSION_STATE.md for
+   the full writeup.
+
+5. CC-CONFIG PRESETS NOW ALSO SAVE THE MIDI CONTROL INPUT DEVICE, BY NAME:
+   the user pointed out that "different MIDI controllers" (the whole reason
+   for this preset system existing) usually also means a different MIDI
+   port, so each saved slot should remember which device obj-c34-indev was
+   set to. Saves the device's NAME (obj-c34-indev outlet 1's text), not its
+   umenu index -- MIDI port lists can be reordered, gain/lose entries, or
+   have devices unplugged between sessions, so a raw index could silently
+   select the wrong device later. On RECALL, `prepend symbol` -> obj-c34-
+   indev inlet 0 selects by matching text (umenu's own "symbol" message,
+   confirmed via Max's umenu reference); a name that no longer matches any
+   connected device is a harmless no-op, which is the correct fallback here.
+   Third embedded coll: obj-c35-ccdevice, defaulting every slot to a sentinel
+   ('(unset)') that isn't expected to match any real device name.
+
+6. Program Change Input Device selector (added in this same build, item 1)
+   repositioned in presentation to sit next to the bus-state preset
+   selection (slotmenu/SAVE/RECALL/nameedit) per the user's request, since
+   it drives that preset system's PC-triggered recall -- moved out of the
+   MIDI Control Input area, which is unrelated (CC control, not PC/presets).
+
 NOT hardware/Max tested -- see SESSION_STATE.md "Control-35" MAX-TEST ITEMS.
 """
 import json
@@ -103,16 +133,20 @@ assert box_by_id['obj-pv2-pgmin']['text'] == 'pgmin'
 assert not any(l['patchline']['destination'][0] == 'obj-pv2-pgmin' for l in lines), \
     'obj-pv2-pgmin already has an incoming connection -- pattern no longer applies'
 
+# Presentation placement: next to the bus-state preset selection (slotmenu/
+# SAVE/RECALL at [750,110] and nameedit at [750,140]) per the user's request,
+# not near the CC MIDI Control Input controls -- this selector affects
+# Program Change (preset recall), not CC input, so it belongs with the
+# preset UI it actually drives.
 add_box({'id': 'obj-c35-pcin-cmt', 'maxclass': 'comment',
-         'text': 'Program Change Input Device (preset recall only -- independent '
-                 'of the MIDI Control Input Device above)',
+         'text': 'Program Change Input Device (preset recall)',
          'patching_rect': [40.0, 5400.0, 420.0, 20.0],
-         'presentation': 1, 'presentation_rect': [20.0, 715.0, 420.0, 16.0]})
+         'presentation': 1, 'presentation_rect': [750.0, 165.0, 250.0, 16.0]})
 add_box({'id': 'obj-c35-pcindev', 'maxclass': 'umenu', 'items': MIDI_DEVICE_ITEMS,
          'numinlets': 1, 'numoutlets': 3, 'outlettype': ['int', '', ''],
          'parameter_enable': 0,
          'patching_rect': [40.0, 5430.0, 160.0, 22.0],
-         'presentation': 1, 'presentation_rect': [20.0, 735.0, 200.0, 22.0]})
+         'presentation': 1, 'presentation_rect': [750.0, 183.0, 200.0, 22.0]})
 add_box({'id': 'obj-c35-pc-pport', 'maxclass': 'newobj', 'text': 'prepend port',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [40.0, 5460.0, 90.0, 22.0]})
@@ -181,9 +215,15 @@ add_box({'id': 'obj-c35-ccroute-text', 'maxclass': 'newobj', 'text': 'route text
          'patching_rect': [40.0, 5590.0, 90.0, 22.0]})
 add_line('obj-c35-ccnameedit', 0, 'obj-c35-ccroute-text', 0)
 
-# --- colls: values (8 CC numbers per slot) and names (label per slot),
-#     both keyed 1-16, both pre-seeded so every lookup always finds
-#     something (same idiom as obj-c34-namecache) ---
+# --- colls: values (8 CC numbers per slot), names (label per slot), and
+#     device (the MIDI Control Input Device's NAME, not its umenu index --
+#     ports can be reordered/renumbered/unplugged between sessions, so the
+#     saved slot needs to re-select by matching text, not replay a raw index
+#     that might now point at a different device). All keyed 1-16, all
+#     pre-seeded so every lookup always finds something (same idiom as
+#     obj-c34-namecache). DEVICE_UNSET is not expected to match any real
+#     MIDI device name, so recalling a never-saved slot is a harmless no-op. ---
+DEVICE_UNSET = '(unset)'
 add_box({'id': 'obj-c35-ccvalues', 'maxclass': 'newobj',
          'text': 'coll obj-c35-ccvalues @embed 1',
          'numinlets': 1, 'numoutlets': 4, 'outlettype': ['', '', '', ''],
@@ -202,6 +242,16 @@ add_box({'id': 'obj-c35-ccnames', 'maxclass': 'newobj',
          'coll_data': {
              'count': N_CC_SLOTS,
              'data': [{'key': n, 'value': ['Config', str(n)]}
+                      for n in range(1, N_CC_SLOTS + 1)],
+         }})
+add_box({'id': 'obj-c35-ccdevice', 'maxclass': 'newobj',
+         'text': 'coll obj-c35-ccdevice @embed 1',
+         'numinlets': 1, 'numoutlets': 4, 'outlettype': ['', '', '', ''],
+         'saved_object_attributes': {'embed': 1, 'precision': 6},
+         'patching_rect': [5540.0, 5700.0, 200.0, 22.0],
+         'coll_data': {
+             'count': N_CC_SLOTS,
+             'data': [{'key': n, 'value': [DEVICE_UNSET]}
                       for n in range(1, N_CC_SLOTS + 1)],
          }})
 
@@ -226,17 +276,21 @@ add_box({'id': 'obj-c35-restore-pset', 'maxclass': 'newobj', 'text': 'prepend se
 add_line('obj-c35-ccshadow-restore', 0, 'obj-c35-restore-pset', 0)
 add_line('obj-c35-restore-pset', 0, 'obj-c35-ccmenu', 0)
 
-# --- SAVE: capture the 8 ccsel values + current slot, synchronously ---
-# t b x9 (right-to-left): outlets 8..1 bang each ccsel box (in CC_TARGETS
-# order) to make it output its current value straight into savepack's cold
-# inlets; outlet 0 (LAST) bangs the save-shadow, fetching the 0-based index,
-# +1'ing it into savepack's HOT inlet 0 -- guaranteeing all 8 cold inlets
-# are already filled before the pack fires.
+# --- SAVE: capture the 8 ccsel values + the MIDI Control Input Device name
+#     + current slot, synchronously ---
+# t b x10 (right-to-left): outlet 9 (fires FIRST) bangs obj-c34-indev so it
+# re-outputs its current selection (index AND text, confirmed via Max's own
+# umenu reference: bang re-sends both outlet 0 and outlet 1) into
+# savedev-zljoin's cold inlet; outlets 8..1 bang each ccsel box (in
+# CC_TARGETS order) into savepack's cold inlets; outlet 0 (LAST) bangs the
+# save-shadow, fetching the 0-based index, +1'ing it into BOTH savepack's
+# and savedev-zljoin's HOT inlets -- guaranteeing every cold inlet on both
+# is already filled before either fires.
 add_box({'id': 'obj-c35-save-t', 'maxclass': 'newobj',
-         'text': 't b b b b b b b b b',
-         'numinlets': 1, 'numoutlets': 9,
-         'outlettype': ['bang'] * 9,
-         'patching_rect': [5100.0, 5820.0, 140.0, 22.0]})
+         'text': 't b b b b b b b b b b',
+         'numinlets': 1, 'numoutlets': 10,
+         'outlettype': ['bang'] * 10,
+         'patching_rect': [5100.0, 5820.0, 160.0, 22.0]})
 add_line('obj-c35-ccsavebtn', 0, 'obj-c35-save-t', 0)
 
 add_box({'id': 'obj-c35-savepack', 'maxclass': 'newobj',
@@ -261,6 +315,20 @@ add_line('obj-c35-save-t', 0, 'obj-c35-ccshadow-save', 0)         # LAST: fetch 
 add_line('obj-c35-ccshadow-save', 0, 'obj-c35-save-slotplus1', 0)
 add_line('obj-c35-save-slotplus1', 0, 'obj-c35-savepack', 0)      # HOT: triggers pack
 add_line('obj-c35-savepack', 0, 'obj-c35-ccvalues', 0)             # write [slot v1..v8]
+
+# NOT `pack i s` for [slot, device-name]: device names can be multi-word
+# (e.g. "Arturia BeatStep Pro Arturia BeatStepPro", confirmed present in
+# this patch's own obj-4 device list) and `pack` spills extra atoms from a
+# multi-atom message into subsequent inlets -- the exact bug already found
+# and fixed in the rename mechanism. Uses zl.join instead, which has no
+# per-inlet atom-count limit either way.
+add_box({'id': 'obj-c35-savedev-zljoin', 'maxclass': 'newobj', 'text': 'zl.join',
+         'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [5300.0, 5910.0, 160.0, 22.0]})
+add_line('obj-c35-save-t', 9, 'obj-c34-indev', 0)                     # FIRST: bang re-outputs selection
+add_line('obj-c34-indev', 1, 'obj-c35-savedev-zljoin', 1)             # cold: device name text (NEW tap)
+add_line('obj-c35-save-slotplus1', 0, 'obj-c35-savedev-zljoin', 0)    # HOT: triggers join (same slot as savepack)
+add_line('obj-c35-savedev-zljoin', 0, 'obj-c35-ccdevice', 0)          # write [slot device-name...]
 
 # --- RECALL: fetch slot, look up values, dispatch to the 8 ccsel boxes ---
 # obj-c35-ccrclbtn outputs the literal symbol "RECALL", which int objects do
@@ -288,6 +356,18 @@ add_line('obj-c35-ccvalues', 0, 'obj-c35-rcl-unpack', 0)
 for i, name in enumerate(CC_TARGETS):
     # unpack outlet i corresponds to CC_TARGETS[i] (v1 in leftmost outlet)
     add_line('obj-c35-rcl-unpack', i, f'obj-c34-ccsel-{name}', 0)
+
+# also look up and re-select the saved MIDI Control Input Device by NAME
+# (not by replaying a raw umenu index, which could point at a different
+# device if ports were added/removed/reordered since the save) -- fans out
+# from the same slot value already computed above, an independent read
+# with no ordering dependency on the ccvalues lookup.
+add_line('obj-c35-rcl-slotplus1', 0, 'obj-c35-ccdevice', 0)  # lookup -> outlet0: device name
+add_box({'id': 'obj-c35-rcl-dev-prepend', 'maxclass': 'newobj', 'text': 'prepend symbol',
+         'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [5300.0, 5980.0, 100.0, 22.0]})
+add_line('obj-c35-ccdevice', 0, 'obj-c35-rcl-dev-prepend', 0)
+add_line('obj-c35-rcl-dev-prepend', 0, 'obj-c34-indev', 0)  # select by name (fires real output too)
 
 # --- RENAME: write into ccnames directly (synchronous, no external
 #     protocol), then rebuild the menu immediately.

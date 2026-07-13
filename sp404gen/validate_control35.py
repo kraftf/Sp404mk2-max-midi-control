@@ -134,7 +134,7 @@ check(outgoing('obj-c35-ccnameedit', 0) == [('obj-c35-ccroute-text', 0)],
 #     CC_TARGETS order, feeding savepack cold inlets 8..1; outlet0 (last)
 #     fetches slot via shadow+1 into savepack's hot inlet 0 ---
 save_t = box_by_id['obj-c35-save-t']
-check(save_t['text'] == 't b b b b b b b b b', 'obj-c35-save-t wrong text/outlet count')
+check(save_t['text'] == 't b b b b b b b b b b', 'obj-c35-save-t wrong text/outlet count (should be 10)')
 check(outgoing('obj-c35-ccsavebtn', 0) == [('obj-c35-save-t', 0)], 'SAVE button not wired to save-t')
 for i, name in enumerate(CC_TARGETS):
     out_index = i + 1
@@ -148,10 +148,30 @@ check(outgoing('obj-c35-save-t', 0) == [('obj-c35-ccshadow-save', 0)],
       'save-t outlet0 (last) should fetch the save shadow')
 check(outgoing('obj-c35-ccshadow-save', 0) == [('obj-c35-save-slotplus1', 0)],
       'ccshadow-save not wired to save-slotplus1')
-check(outgoing('obj-c35-save-slotplus1', 0) == [('obj-c35-savepack', 0)],
-      'save-slotplus1 should feed savepack HOT inlet 0')
+check(sorted(outgoing('obj-c35-save-slotplus1', 0)) ==
+      sorted([('obj-c35-savepack', 0), ('obj-c35-savedev-zljoin', 0)]),
+      'save-slotplus1 should feed BOTH savepack HOT inlet 0 AND savedev-zljoin HOT inlet 0')
 check(outgoing('obj-c35-savepack', 0) == [('obj-c35-ccvalues', 0)],
       'savepack output should write into obj-c35-ccvalues')
+
+# --- SAVE also captures the MIDI Control Input Device by NAME (not index),
+#     since the coll for a lookup-by-name recall needs zl.join (not pack)
+#     for the identical multi-atom-spillover reason as the rename fix ---
+check(outgoing('obj-c35-save-t', 9) == [('obj-c34-indev', 0)],
+      'save-t outlet9 (fires first) should bang obj-c34-indev to re-output its current selection')
+check(('obj-c35-savedev-zljoin', 1) in outgoing('obj-c34-indev', 1),
+      'obj-c34-indev outlet1 (device name text) should feed savedev-zljoin cold inlet')
+check(outgoing('obj-c35-savedev-zljoin', 0) == [('obj-c35-ccdevice', 0)],
+      'savedev-zljoin output should write into obj-c35-ccdevice')
+
+ccdevice = box_by_id['obj-c35-ccdevice']
+check(ccdevice['text'] == 'coll obj-c35-ccdevice @embed 1', 'obj-c35-ccdevice text wrong')
+cd3 = ccdevice['coll_data']
+check(cd3['count'] == N_CC_SLOTS, 'obj-c35-ccdevice count wrong')
+keys3 = sorted(e['key'] for e in cd3['data'])
+check(keys3 == list(range(1, N_CC_SLOTS + 1)), 'obj-c35-ccdevice keys not exactly 1..16')
+for e in cd3['data']:
+    check(e['value'] == ['(unset)'], f'obj-c35-ccdevice[{e["key"]}] default value wrong: {e["value"]}')
 
 # --- RECALL chain: unpack outlet i -> ccsel(CC_TARGETS[i]).
 #     This must be the SAME index i as SAVE's pack_inlet = i + 1 above --
@@ -167,8 +187,9 @@ check(outgoing('obj-c35-rcl-t', 0) == [('obj-c35-ccshadow-rcl', 0)],
       'rcl-t not wired to ccshadow-rcl')
 check(outgoing('obj-c35-ccshadow-rcl', 0) == [('obj-c35-rcl-slotplus1', 0)],
       'ccshadow-rcl not wired to rcl-slotplus1')
-check(outgoing('obj-c35-rcl-slotplus1', 0) == [('obj-c35-ccvalues', 0)],
-      'rcl-slotplus1 should look up obj-c35-ccvalues')
+check(sorted(outgoing('obj-c35-rcl-slotplus1', 0)) ==
+      sorted([('obj-c35-ccvalues', 0), ('obj-c35-ccdevice', 0)]),
+      'rcl-slotplus1 should look up BOTH obj-c35-ccvalues AND obj-c35-ccdevice')
 check(outgoing('obj-c35-ccvalues', 0) == [('obj-c35-rcl-unpack', 0)],
       'ccvalues lookup output should feed rcl-unpack')
 rcl_unpack = box_by_id['obj-c35-rcl-unpack']
@@ -177,6 +198,14 @@ for i, name in enumerate(CC_TARGETS):
     ccsel_id = f'obj-c34-ccsel-{name}'
     check((ccsel_id, 0) in outgoing('obj-c35-rcl-unpack', i),
           f'rcl-unpack outlet {i} should dispatch to {ccsel_id}')
+
+# --- RECALL also re-selects the saved MIDI Control Input Device by name ---
+check(outgoing('obj-c35-ccdevice', 0) == [('obj-c35-rcl-dev-prepend', 0)],
+      'ccdevice lookup output should feed rcl-dev-prepend')
+check(box_by_id['obj-c35-rcl-dev-prepend']['text'] == 'prepend symbol',
+      'obj-c35-rcl-dev-prepend wrong text')
+check(outgoing('obj-c35-rcl-dev-prepend', 0) == [('obj-c34-indev', 0)],
+      'rcl-dev-prepend should select obj-c34-indev by name (umenu "symbol" message)')
 
 # --- rename write + rebuild chain ---
 # NOT `pack s i` (see build_control35.py's long comment on this): Cycling
