@@ -255,6 +255,12 @@ if box_by_id.get('obj-c34-namepack', {}).get('text') != 'pack s i':
     errors.append('obj-c34-namepack should be "pack s i"')
 if box_by_id.get('obj-c34-namemsg', {}).get('text') != 'slotname $2 $1':
     errors.append('obj-c34-namemsg should be the message "slotname $2 $1"')
+# NOT offset by +1 -- pattrstorage's own "slotname" numbering is 0-based and
+# matches slotmenu's own 0-based item index directly. An earlier +1 here
+# (copied from the unrelated SAVE/RECALL "store N" convention) renamed the
+# slot AFTER the one actually selected, confirmed by Max testing.
+if box_by_id.get('obj-c34-slot1', {}).get('text') != '+ 0':
+    errors.append('obj-c34-slot1 should be "+ 0" (no offset -- see comment in build script)')
 required_rename_chain = [
     (('obj-pv2-slotmenu', 0), ('obj-c34-slot1', 0)),
     (('obj-c34-route-text', 0), ('obj-c34-namepack', 0)),
@@ -309,7 +315,8 @@ required_parse_chain = [
     (('obj-c34-slotshadow', 0), ('obj-c34-restore-pset', 0)),
     (('obj-c34-restore-pset', 0), ('obj-pv2-slotmenu', 0)),
     (('obj-c34-slotname-done', 1), ('obj-c34-slotname-unpack', 0)),
-    (('obj-c34-slotname-unpack', 0), ('obj-c34-slotname-minus1', 0)),
+    (('obj-c34-slotname-unpack', 0), ('obj-c34-slotname-notzero', 0)),
+    (('obj-c34-slotname-notzero', 1), ('obj-c34-slotname-minus1', 0)),
     (('obj-c34-slotname-minus1', 0), ('obj-c34-slotname-sprintf', 0)),
     (('obj-c34-slotname-unpack', 1), ('obj-c34-slotname-zljoin', 1)),
     (('obj-c34-slotname-sprintf', 0), ('obj-c34-slotname-zljoin', 0)),
@@ -321,6 +328,14 @@ for src, dst in required_parse_chain:
         errors.append(f'missing parse wire: {src} -> {dst}')
 if box_by_id.get('obj-c34-slotname-sprintf', {}).get('text') != 'sprintf append PC%ld -':
     errors.append('obj-c34-slotname-sprintf should be "sprintf append PC%ld -"')
+
+# pattrstorage's permanent slot 0 ("(undefined)") must be filtered out --
+# select 0's match outlet (0) must be unwired (slot 0 silently skipped, not
+# one of the intended 128 presets)
+if box_by_id.get('obj-c34-slotname-notzero', {}).get('text') != 'select 0':
+    errors.append('obj-c34-slotname-notzero should be "select 0"')
+if any(s[0] == 'obj-c34-slotname-notzero' and s[1] == 0 for s, d in conn):
+    errors.append('obj-c34-slotname-notzero outlet 0 (slot==0 match) must be unwired')
 
 print(f'{target}')
 print(f'  boxes: {len(boxes)}, lines: {len(lines)}')

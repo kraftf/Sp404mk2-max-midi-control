@@ -284,11 +284,18 @@ add_box({'id': 'obj-c34-route-text', 'maxclass': 'newobj', 'text': 'route text',
          'patching_rect': [5100.0, 4650.0, 90.0, 22.0]})
 add_line('obj-c34-nameedit', 0, 'obj-c34-route-text', 0)
 
-# current slot, 1-based, tracked continuously (no bang-fetch needed --
-# fires on every real selection change, which always happens well before
-# the user finishes typing a name, so pack's cold inlet is already correct
-# by the time Return commits the text)
-add_box({'id': 'obj-c34-slot1', 'maxclass': 'newobj', 'text': '+ 1',
+# current slot, tracked continuously (no bang-fetch needed -- fires on
+# every real selection change, which always happens well before the user
+# finishes typing a name, so pack's cold inlet is already correct by the
+# time Return commits the text). NOT offset by +1: pattrstorage's own
+# "slotname" numbering is 0-based and matches obj-pv2-slotmenu's own
+# 0-based item index directly -- confirmed by Max testing, where an
+# earlier +1 here (copied from the unrelated SAVE/RECALL "store N +1"
+# convention) renamed the slot AFTER the one actually selected. Kept as a
+# "+ 0" object rather than wiring straight through so the intent (this is
+# deliberately a no-op, not a forgotten adjustment) stays visible in the
+# patch.
+add_box({'id': 'obj-c34-slot1', 'maxclass': 'newobj', 'text': '+ 0',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
          'patching_rect': [5100.0, 4680.0, 40.0, 22.0]})
 add_line('obj-pv2-slotmenu', 0, 'obj-c34-slot1', 0)
@@ -381,10 +388,21 @@ add_box({'id': 'obj-c34-slotname-unpack', 'maxclass': 'newobj', 'text': 'unpack 
          'numinlets': 1, 'numoutlets': 2, 'outlettype': ['int', ''],
          'patching_rect': [5250.0, 4980.0, 70.0, 22.0]})
 add_line('obj-c34-slotname-done', 1, 'obj-c34-slotname-unpack', 0)  # unmatched: "<n> <name>"
+# pattrstorage always reports a permanent slot 0 ("(undefined)") ahead of
+# any user-created slots -- confirmed by Max testing (it showed up as
+# "PC-1 - (undefined)", always present, never one of the intended 128).
+# select 0 filters it out: its reject outlet (1, non-zero slots) passes
+# through to the PC-prefix/append path unchanged; its match outlet (0,
+# slot==0) is left unwired, so slot 0 is silently skipped and never
+# appended to the visible menu.
+add_box({'id': 'obj-c34-slotname-notzero', 'maxclass': 'newobj', 'text': 'select 0',
+         'numinlets': 1, 'numoutlets': 2, 'outlettype': ['bang', 'int'],
+         'patching_rect': [5250.0, 5000.0, 60.0, 22.0]})
+add_line('obj-c34-slotname-unpack', 0, 'obj-c34-slotname-notzero', 0)  # SECOND (int, leftmost)
 add_box({'id': 'obj-c34-slotname-minus1', 'maxclass': 'newobj', 'text': '- 1',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
-         'patching_rect': [5250.0, 5010.0, 40.0, 22.0]})
-add_line('obj-c34-slotname-unpack', 0, 'obj-c34-slotname-minus1', 0)  # SECOND (int, leftmost)
+         'patching_rect': [5250.0, 5015.0, 40.0, 22.0]})
+add_line('obj-c34-slotname-notzero', 1, 'obj-c34-slotname-minus1', 0)  # reject (non-zero) passthrough
 # single-specifier sprintf builds "append PC<n> -" (proven pattern, same as
 # the existing `sprintf send Bus%d_X` objects). zl.join then concatenates
 # that with the (possibly multi-atom) name from unpack -- NOT %s (exactly

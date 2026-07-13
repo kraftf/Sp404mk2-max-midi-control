@@ -78265,7 +78265,7 @@
     "box": {
      "id": "obj-c34-slot1",
      "maxclass": "newobj",
-     "text": "+ 1",
+     "text": "+ 0",
      "numinlets": 2,
      "numoutlets": 1,
      "outlettype": [
@@ -78503,6 +78503,25 @@
    },
    {
     "box": {
+     "id": "obj-c34-slotname-notzero",
+     "maxclass": "newobj",
+     "text": "select 0",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "outlettype": [
+      "bang",
+      "int"
+     ],
+     "patching_rect": [
+      5250.0,
+      5000.0,
+      60.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
      "id": "obj-c34-slotname-minus1",
      "maxclass": "newobj",
      "text": "- 1",
@@ -78513,7 +78532,7 @@
      ],
      "patching_rect": [
       5250.0,
-      5010.0,
+      5015.0,
       40.0,
       22.0
      ]
@@ -93614,6 +93633,18 @@
      "source": [
       "obj-c34-slotname-unpack",
       0
+     ],
+     "destination": [
+      "obj-c34-slotname-notzero",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-slotname-notzero",
+      1
      ],
      "destination": [
       "obj-c34-slotname-minus1",
