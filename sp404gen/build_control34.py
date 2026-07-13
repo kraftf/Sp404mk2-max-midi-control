@@ -65,7 +65,12 @@ Builds Roland_SP404MK2_Control-34.maxpat from Control-33. Two new features:
      current slot (from obj-c34-slotshadow, +1) triggers namepack's hot
      inlet to write [slot, name] into namecoll, and only THEN (last) is the
      full rebuild kicked off -- so the rebuild's coll lookups always see the
-     just-written name, never a stale one.
+     just-written name, never a stale one. Configured at load via explicit
+     `keymode 1`/`outputmode 1` messages (see obj-c34-nameedit-lb and the
+     two message boxes feeding it) rather than creation-time attributes --
+     the attributes did not take effect when set that way in real Max
+     testing; the message form is the mechanism Max's own reference
+     documents.
    - obj-c34-slotshadow (`int`, cold-tapped from slotmenu's own outlet, same
      "shadow int" idiom used everywhere else in this patch) exists so the
      rename path can fetch the current slot without disturbing anything.
@@ -255,14 +260,33 @@ add_box({'id': 'obj-c34-name-cmt', 'maxclass': 'comment',
          'patching_rect': [5100.0, 4580.0, 400.0, 20.0]})
 add_box({'id': 'obj-c34-nameedit', 'maxclass': 'textedit',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
-         # keymode 1: without it (the default, keymode 0) Return just inserts
-         # a line break and NEVER outputs anything -- the whole rename chain
-         # would never fire. Confirmed against Max's own textedit reference:
-         # "keymode 1 causes the carriage return to output the entire
-         # contents of the current buffer" (keymode 0 does not).
-         'keymode': 1,
          'patching_rect': [5100.0, 4600.0, 200.0, 22.0],
          'presentation': 1, 'presentation_rect': [750.0, 140.0, 240.0, 22.0]})
+# keymode/outputmode set as creation-time JSON attributes did NOT take effect
+# in real Max testing (Return still just inserted a line break, and the
+# output still arrived as a "text <words...>" message rather than a bare
+# symbol). Max's own textedit reference documents BOTH as also settable by
+# sending the attribute as a message to the inlet ("the message keymode 1
+# causes..."), which is the mechanism used here instead, fired once at load:
+#   keymode 1    -- Return outputs the buffer instead of inserting a line break
+#   outputmode 1 -- output is a single symbol, not a "text <words...>" message
+#                   (that "text" selector was otherwise silently swallowing
+#                   everything the user typed -- pack's symbol inlet only
+#                   keeps an incoming list's first atom, so the stored/
+#                   displayed name became the literal word "text")
+add_box({'id': 'obj-c34-nameedit-lb', 'maxclass': 'newobj', 'text': 'loadbang',
+         'numinlets': 1, 'numoutlets': 1, 'outlettype': ['bang'],
+         'patching_rect': [5260.0, 4600.0, 60.0, 22.0]})
+add_box({'id': 'obj-c34-nameedit-keymode', 'maxclass': 'message', 'text': 'keymode 1',
+         'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [5330.0, 4600.0, 70.0, 20.0]})
+add_box({'id': 'obj-c34-nameedit-outmode', 'maxclass': 'message', 'text': 'outputmode 1',
+         'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [5410.0, 4600.0, 90.0, 20.0]})
+add_line('obj-c34-nameedit-lb', 0, 'obj-c34-nameedit-keymode', 0)
+add_line('obj-c34-nameedit-lb', 0, 'obj-c34-nameedit-outmode', 0)
+add_line('obj-c34-nameedit-keymode', 0, 'obj-c34-nameedit', 0)
+add_line('obj-c34-nameedit-outmode', 0, 'obj-c34-nameedit', 0)
 add_box({'id': 'obj-c34-namet', 'maxclass': 'newobj', 'text': 't b b l',
          'numinlets': 1, 'numoutlets': 3, 'outlettype': ['bang', 'bang', ''],
          'patching_rect': [5100.0, 4630.0, 60.0, 22.0]})

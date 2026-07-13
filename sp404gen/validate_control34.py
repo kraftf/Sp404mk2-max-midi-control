@@ -225,13 +225,22 @@ if uzi_box is None or uzi_box['text'] != 'uzi 128':
     errors.append(f'obj-c34-rebuild-uzi: expected "uzi 128" (base defaults to 1), '
                   f'got {uzi_box and uzi_box["text"]!r}')
 
-# textedit defaults to keymode 0, where Return never outputs anything -- the
-# whole rename chain would never fire without keymode 1 (the "renaming
-# doesn't work" bug found in the same Max test)
-nameedit_box = box_by_id.get('obj-c34-nameedit')
-if nameedit_box is None or nameedit_box.get('keymode') != 1:
-    errors.append(f'obj-c34-nameedit: expected keymode=1, got '
-                  f'{nameedit_box and nameedit_box.get("keymode")!r}')
+# textedit defaults to keymode 0 (Return never outputs anything) and
+# outputmode 0 (output is a "text <words...>" message, whose "text" selector
+# gets mistaken for the actual name downstream). Setting these as creation-
+# time JSON attributes did NOT take effect in real Max testing; they must
+# be sent as explicit messages at load instead (documented Max mechanism).
+for msg_id, expected_text in (('obj-c34-nameedit-keymode', 'keymode 1'),
+                              ('obj-c34-nameedit-outmode', 'outputmode 1')):
+    msg_box = box_by_id.get(msg_id)
+    if msg_box is None or msg_box['text'] != expected_text:
+        errors.append(f'{msg_id}: expected {expected_text!r}, got '
+                      f'{msg_box and msg_box["text"]!r}')
+    if ((msg_id, 0), ('obj-c34-nameedit', 0)) not in conn:
+        errors.append(f'missing {msg_id} -> obj-c34-nameedit config message wire')
+if (('obj-c34-nameedit-lb', 0), ('obj-c34-nameedit-keymode', 0)) not in conn or \
+   (('obj-c34-nameedit-lb', 0), ('obj-c34-nameedit-outmode', 0)) not in conn:
+    errors.append('obj-c34-nameedit-lb must feed both config messages')
 required_rename_chain = [
     (('obj-c34-nameedit', 0), ('obj-c34-namet', 0)),
     (('obj-c34-namet', 2), ('obj-c34-namepack', 1)),

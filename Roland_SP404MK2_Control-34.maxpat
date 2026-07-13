@@ -78984,7 +78984,6 @@
      "outlettype": [
       ""
      ],
-     "keymode": 1,
      "patching_rect": [
       5100.0,
       4600.0,
@@ -78997,6 +78996,60 @@
       140.0,
       240.0,
       22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-nameedit-lb",
+     "maxclass": "newobj",
+     "text": "loadbang",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "outlettype": [
+      "bang"
+     ],
+     "patching_rect": [
+      5260.0,
+      4600.0,
+      60.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-nameedit-keymode",
+     "maxclass": "message",
+     "text": "keymode 1",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ],
+     "patching_rect": [
+      5330.0,
+      4600.0,
+      70.0,
+      20.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-nameedit-outmode",
+     "maxclass": "message",
+     "text": "outputmode 1",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ],
+     "patching_rect": [
+      5410.0,
+      4600.0,
+      90.0,
+      20.0
      ]
     }
    },
@@ -93955,6 +94008,54 @@
      "destination": [
       "obj-c34-slotshadow-restore",
       1
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-nameedit-lb",
+      0
+     ],
+     "destination": [
+      "obj-c34-nameedit-keymode",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-nameedit-lb",
+      0
+     ],
+     "destination": [
+      "obj-c34-nameedit-outmode",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-nameedit-keymode",
+      0
+     ],
+     "destination": [
+      "obj-c34-nameedit",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-nameedit-outmode",
+      0
+     ],
+     "destination": [
+      "obj-c34-nameedit",
+      0
      ]
     }
    },

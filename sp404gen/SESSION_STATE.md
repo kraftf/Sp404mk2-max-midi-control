@@ -6,23 +6,25 @@ system with pattrstorage/pattrforward and passed all no-hardware Max tests. Cont
 added the 5 DFX slot assignments to the preset system, and fixed two Max-test-found bugs
 (cross-group bus-switch label scramble; post-SAVE/RECALL MIDI-channel-5 residue) — ALL
 FOUR retested and confirmed working by the user in Max (2026-07-12, no hardware).
-Roland_SP404MK2_Control-34.maxpat (778 objects, 1240 lines) builds on Control-33: adds
+Roland_SP404MK2_Control-34.maxpat (781 objects, 1244 lines) builds on Control-33: adds
 MIDI Control Input (external CC control of the 8 hardware-facing controls) and expands
 the preset system to 128 slots (full PC range) with per-preset renaming — see
 "Control-34" section below.
 User-tested in Max (2026-07-12): MIDI Control Input confirmed working first try (only
-the mapped dial moves, only that one CC is sent). The 128-preset/rename system took FOUR
-rounds to get fully working: (1) empty/unresponsive umenu — missing `append` selector in
-the rebuild's sprintf; (2) still broken — a `prepend`-based part of that same fix didn't
-adopt its dynamic prefix the way assumed, replaced with a single dual-specifier sprintf;
-(3) items all shown but numbered wrong (started "PC2 - Preset 3", ended
-"PC129 - Preset 128") — `uzi 128 3`'s "3" was misread as an outlet selector when it's
-actually the counter's starting value, so it counted 3..130 instead of 1..128; (4)
-renaming did nothing at all — `textedit` defaults to `keymode 0`, where Return never
-outputs anything. Bugs 3 and 4 were root-caused by looking up Max's own `uzi`/`textedit`
-reference documentation instead of guessing, after two guess-based rounds (1 and 2) had
-each only partially fixed things. See the "Control-34" section below for the full
-sequence. NOT yet retested after this fourth fix.
+the mapped dial moves, only that one CC is sent). The 128-preset/rename system took FIVE
+rounds to get fully working (numbering and SAVE/RECALL are now both confirmed correct;
+renaming is the one piece still in progress): (1) empty/unresponsive umenu — missing
+`append` selector in the rebuild's sprintf; (2) still broken — a `prepend`-based part of
+that same fix didn't adopt its dynamic prefix the way assumed, replaced with a single
+dual-specifier sprintf; (3) items all shown but numbered wrong — `uzi 128 3`'s "3" was
+misread as an outlet selector when it's actually the counter's starting value, so it
+counted 3..130 instead of 1..128 (fix confirmed correct on retest); (4)/(5) renaming
+still doesn't work — `textedit`'s `keymode`/`outputmode` set as creation-time JSON
+attributes never actually took effect (Return still just inserts a line break, and the
+committed text was always the literal word "text" instead of what was typed); replaced
+with the documented message-based mechanism (`keymode 1`/`outputmode 1` sent to the
+object at load) instead of a saved attribute. See the "Control-34" section below for the
+full sequence. NOT yet retested after this fifth fix.
 NOT YET tested: with real SP-404 MK2 hardware attached (per-bus MIDI channel dispatch,
 PC 0-7 recall to the actual unit — now PC 0-127).
 
@@ -248,6 +250,40 @@ stale/duplicated trailing names; (ii) SAVE/RECALL (already confirmed, shouldn't 
 changed); (iii) select a preset, type a name, press Enter/Return — the menu should
 immediately show "PC<n> - <name>" with the same slot still selected. This is the fourth
 attempt at this specific test.
+
+### Fifth bug found on retest — the keymode/outputmode attributes never actually applied
+User retested: (i) numbering fully correct now, "PC0 - Preset 1" through
+"PC127 - Preset 128", no stale names — bug 3 confirmed fixed. (ii) SAVE/RECALL still
+fine. (iii) Renaming still broken, but differently: pressing Return just inserts a line
+break in the text box (not a commit) exactly like keymode 0's documented behavior; only
+clicking OUTSIDE the text box (defocus) commits anything. And what gets committed is
+wrong: the PC-number prefix is fine, but the name portion always shows the literal word
+"text" instead of whatever was typed.
+
+Both symptoms point to the same root cause: `keymode: 1` and (this session, in response)
+`outputmode: 1`, set as top-level JSON keys on obj-c34-nameedit's box definition (the same
+mechanism used successfully for every other UI attribute in this codebase, e.g. umenu's
+`items`, live.dial's `parameter_enable`), did NOT take effect for `textedit` specifically.
+The object kept its defaults: keymode 0 (Return does nothing but insert a line break --
+matches "changes paragraph" exactly) and outputmode 0 (output is a `"text <words...>"`
+MESSAGE, not a bare symbol -- confirmed against a Max forums thread specifically about
+this exact "text" prefix gotcha). Since `obj-c34-namepack` (`pack 0 s`) only keeps the
+FIRST atom sent to its symbol inlet, receiving `["text", "MyName"]` silently kept just
+"text" and discarded the actual typed name -- reproducing "always text regardless of
+what you typed" exactly. (PC-number prefix was unaffected since it's computed independently
+by the rebuild's sprintf, not part of this chain.)
+
+Fix: abandoned the creation-time attribute keys entirely. Max's own textedit reference
+documents BOTH settings as also configurable via an explicit MESSAGE to the object's
+inlet ("the message keymode 1 causes..."), which is a different, message-passing
+mechanism from a saved creation attribute -- added `obj-c34-nameedit-lb` (a dedicated
+loadbang) feeding two message boxes, `keymode 1` and `outputmode 1`, both wired into
+`obj-c34-nameedit`'s inlet at load. `validate_control34.py` updated to check these
+messages and their wiring instead of the (apparently inert) `keymode` JSON key.
+RETEST: press Return in the rename box -- must commit (not insert a line break); the
+resulting preset label must show the actual typed name, not the word "text". This is the
+fifth attempt at the renaming half of this test; numbering and SAVE/RECALL are confirmed
+already and don't need retesting.
 
 ## 33: SYNC-expr ternary fix + DFX slots into presets
 Generated by `sp404gen/build_control33.py` (from Control-32); structurally validated by
