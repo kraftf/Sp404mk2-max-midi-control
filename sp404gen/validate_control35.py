@@ -156,11 +156,24 @@ check(outgoing('obj-c35-savepack', 0) == [('obj-c35-ccvalues', 0)],
 
 # --- SAVE also captures the MIDI Control Input Device by NAME (not index),
 #     since the coll for a lookup-by-name recall needs zl.join (not pack)
-#     for the identical multi-atom-spillover reason as the rename fix ---
-check(outgoing('obj-c35-save-t', 9) == [('obj-c34-indev', 0)],
-      'save-t outlet9 (fires first) should bang obj-c34-indev to re-output its current selection')
-check(('obj-c35-savedev-zljoin', 1) in outgoing('obj-c34-indev', 1),
-      'obj-c34-indev outlet1 (device name text) should feed savedev-zljoin cold inlet')
+#     for the identical multi-atom-spillover reason as the rename fix.
+#
+#     NOT a bare bang into obj-c34-indev: umenu does not document responding
+#     to bang at all (append/clear/delete/dictionary/prefix/set/symbol/etc.
+#     are documented; bang is not) -- confirmed the hard way, this silently
+#     did nothing in the user's real Max test. Uses `value <name>` instead
+#     (already proven working elsewhere in this exact patch, e.g. `value
+#     dfx_bus12_1_label_cc`), continuously updated from indev's outlet 1 and
+#     fetched via bang on SAVE, since Cycling '74's own reference confirms
+#     `value` (unlike umenu) does respond to bang with its stored content. ---
+devname_value = box_by_id['obj-c35-indevname-value']
+check(devname_value['text'] == 'value c35_indevname_shadow', 'obj-c35-indevname-value wrong text')
+check(outgoing('obj-c34-indev', 1) and ('obj-c35-indevname-value', 0) in outgoing('obj-c34-indev', 1),
+      'obj-c34-indev outlet1 (device name text) should continuously feed obj-c35-indevname-value')
+check(outgoing('obj-c35-save-t', 9) == [('obj-c35-indevname-value', 0)],
+      'save-t outlet9 (fires first) should bang obj-c35-indevname-value to fetch the current device name')
+check(outgoing('obj-c35-indevname-value', 0) == [('obj-c35-savedev-zljoin', 1)],
+      'obj-c35-indevname-value output should feed savedev-zljoin cold inlet')
 check(outgoing('obj-c35-savedev-zljoin', 0) == [('obj-c35-ccdevice', 0)],
       'savedev-zljoin output should write into obj-c35-ccdevice')
 

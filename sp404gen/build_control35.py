@@ -278,14 +278,19 @@ add_line('obj-c35-restore-pset', 0, 'obj-c35-ccmenu', 0)
 
 # --- SAVE: capture the 8 ccsel values + the MIDI Control Input Device name
 #     + current slot, synchronously ---
-# t b x10 (right-to-left): outlet 9 (fires FIRST) bangs obj-c34-indev so it
-# re-outputs its current selection (index AND text, confirmed via Max's own
-# umenu reference: bang re-sends both outlet 0 and outlet 1) into
-# savedev-zljoin's cold inlet; outlets 8..1 bang each ccsel box (in
-# CC_TARGETS order) into savepack's cold inlets; outlet 0 (LAST) bangs the
-# save-shadow, fetching the 0-based index, +1'ing it into BOTH savepack's
-# and savedev-zljoin's HOT inlets -- guaranteeing every cold inlet on both
-# is already filled before either fires.
+# t b x10 (right-to-left): outlet 9 (fires FIRST) bangs a `value` shadow
+# holding the current device name (see below -- NOT the umenu itself, which
+# does not document responding to bang at all: the earlier belief that
+# "bang re-outputs both outlet 0 and outlet 1" was a bad citation, most
+# likely describing umenu's popup-menu activate/deactivate behavior, not a
+# runtime bang message. umenu's own documented message list is append/
+# clear/delete/dictionary/prefix/set/symbol/etc. -- bang is not among them);
+# outlets 8..1 bang each ccsel box (in CC_TARGETS order, `number` boxes DO
+# document outputting their current value on bang) into savepack's cold
+# inlets; outlet 0 (LAST) bangs the save-shadow, fetching the 0-based index,
+# +1'ing it into BOTH savepack's and savedev-zljoin's HOT inlets --
+# guaranteeing every cold inlet on both is already filled before either
+# fires.
 add_box({'id': 'obj-c35-save-t', 'maxclass': 'newobj',
          'text': 't b b b b b b b b b b',
          'numinlets': 1, 'numoutlets': 10,
@@ -322,11 +327,26 @@ add_line('obj-c35-savepack', 0, 'obj-c35-ccvalues', 0)             # write [slot
 # multi-atom message into subsequent inlets -- the exact bug already found
 # and fixed in the rename mechanism. Uses zl.join instead, which has no
 # per-inlet atom-count limit either way.
+#
+# `value <name>` (Max's global-variable object) is used here to hold "the
+# current device name, fetchable on demand" -- this codebase already uses
+# it exactly this way (obj-31 etc., `value dfx_bus12_1_label_cc`, set from
+# many sources and read via bang from obj-512/obj-550), and Cycling '74's
+# own reference confirms it: "you can get the contents out of a particular
+# value object by sending it a bang" -- unlike umenu, which does not. Kept
+# continuously updated (cold, no meaningful output consumed) from
+# obj-c34-indev's outlet 1 on every real selection change, then banged on
+# SAVE to fetch whatever it last saw.
+add_box({'id': 'obj-c35-indevname-value', 'maxclass': 'newobj',
+         'text': 'value c35_indevname_shadow',
+         'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [5300.0, 5850.0, 180.0, 22.0]})
+add_line('obj-c34-indev', 1, 'obj-c35-indevname-value', 0)  # continuous update (NEW tap)
 add_box({'id': 'obj-c35-savedev-zljoin', 'maxclass': 'newobj', 'text': 'zl.join',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5300.0, 5910.0, 160.0, 22.0]})
-add_line('obj-c35-save-t', 9, 'obj-c34-indev', 0)                     # FIRST: bang re-outputs selection
-add_line('obj-c34-indev', 1, 'obj-c35-savedev-zljoin', 1)             # cold: device name text (NEW tap)
+add_line('obj-c35-save-t', 9, 'obj-c35-indevname-value', 0)           # FIRST: bang fetches current name
+add_line('obj-c35-indevname-value', 0, 'obj-c35-savedev-zljoin', 1)   # cold: device name text
 add_line('obj-c35-save-slotplus1', 0, 'obj-c35-savedev-zljoin', 0)    # HOT: triggers join (same slot as savepack)
 add_line('obj-c35-savedev-zljoin', 0, 'obj-c35-ccdevice', 0)          # write [slot device-name...]
 
