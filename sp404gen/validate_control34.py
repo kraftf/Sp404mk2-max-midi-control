@@ -225,27 +225,36 @@ if uzi_box is None or uzi_box['text'] != 'uzi 128':
     errors.append(f'obj-c34-rebuild-uzi: expected "uzi 128" (base defaults to 1), '
                   f'got {uzi_box and uzi_box["text"]!r}')
 
-# textedit defaults to keymode 0 (Return never outputs anything) and
-# outputmode 0 (output is a "text <words...>" message, whose "text" selector
-# gets mistaken for the actual name downstream). Setting these as creation-
-# time JSON attributes did NOT take effect in real Max testing; they must
-# be sent as explicit messages at load instead (documented Max mechanism).
-for msg_id, expected_text in (('obj-c34-nameedit-keymode', 'keymode 1'),
-                              ('obj-c34-nameedit-outmode', 'outputmode 1')):
-    msg_box = box_by_id.get(msg_id)
-    if msg_box is None or msg_box['text'] != expected_text:
-        errors.append(f'{msg_id}: expected {expected_text!r}, got '
-                      f'{msg_box and msg_box["text"]!r}')
-    if ((msg_id, 0), ('obj-c34-nameedit', 0)) not in conn:
-        errors.append(f'missing {msg_id} -> obj-c34-nameedit config message wire')
+# textedit defaults to keymode 0 (Return never outputs anything). Setting it
+# as a creation-time JSON attribute did NOT take effect in real Max testing;
+# it must be sent as an explicit message at load instead (documented Max
+# mechanism). Confirmed fixed by the user: Return now commits.
+msg_box = box_by_id.get('obj-c34-nameedit-keymode')
+if msg_box is None or msg_box['text'] != 'keymode 1':
+    errors.append(f'obj-c34-nameedit-keymode: expected "keymode 1", got '
+                  f'{msg_box and msg_box["text"]!r}')
 if (('obj-c34-nameedit-lb', 0), ('obj-c34-nameedit-keymode', 0)) not in conn or \
-   (('obj-c34-nameedit-lb', 0), ('obj-c34-nameedit-outmode', 0)) not in conn:
-    errors.append('obj-c34-nameedit-lb must feed both config messages')
+   (('obj-c34-nameedit-keymode', 0), ('obj-c34-nameedit', 0)) not in conn:
+    errors.append('missing obj-c34-nameedit-lb -> keymode msg -> nameedit chain')
+if 'obj-c34-nameedit-outmode' in box_by_id:
+    errors.append('obj-c34-nameedit-outmode should no longer exist -- an outputmode 1 '
+                  'message had no effect in real Max testing; textedit always prepends '
+                  'a "text" selector regardless, stripped instead by obj-c34-route-text')
+
+# textedit ALWAYS prepends the literal selector "text" to its output
+# regardless of outputmode (confirmed by Max forum threads about this exact
+# gotcha) -- route text must strip it before anything downstream sees it
+if box_by_id.get('obj-c34-route-text', {}).get('text') != 'route text':
+    errors.append('obj-c34-route-text missing or not "route text"')
+if (('obj-c34-nameedit', 0), ('obj-c34-route-text', 0)) not in conn:
+    errors.append('missing obj-c34-nameedit -> obj-c34-route-text')
+
 required_rename_chain = [
-    (('obj-c34-nameedit', 0), ('obj-c34-namet', 0)),
-    (('obj-c34-namet', 2), ('obj-c34-namepack', 1)),
-    (('obj-c34-namet', 1), ('obj-c34-slotshadow', 0)),
-    (('obj-c34-slot1-name', 0), ('obj-c34-namepack', 0)),
+    (('obj-c34-route-text', 0), ('obj-c34-namet', 0)),
+    (('obj-c34-namet', 2), ('obj-c34-slotshadow', 0)),
+    (('obj-c34-slotshadow', 0), ('obj-c34-slot1-name', 0)),
+    (('obj-c34-slot1-name', 0), ('obj-c34-namepack', 1)),
+    (('obj-c34-namet', 1), ('obj-c34-namepack', 0)),
     (('obj-c34-namepack', 0), ('obj-c34-namecoll', 0)),
     (('obj-c34-namet', 0), ('obj-c34-rebuild-t', 0)),
     (('obj-c34-rebuild-t', 1), ('obj-c34-clear-msg', 0)),
@@ -253,10 +262,11 @@ required_rename_chain = [
     (('obj-c34-rebuild-t', 0), ('obj-c34-rebuild-uzi', 0)),
     (('obj-c34-rebuild-uzi', 2), ('obj-c34-rebuild-split', 0)),
     (('obj-c34-rebuild-split', 1), ('obj-c34-namecoll', 0)),
-    (('obj-c34-namecoll', 0), ('obj-c34-rebuild-sprintf', 1)),
+    (('obj-c34-namecoll', 0), ('obj-c34-rebuild-zljoin', 1)),
     (('obj-c34-rebuild-split', 0), ('obj-c34-rebuild-minus1', 0)),
     (('obj-c34-rebuild-minus1', 0), ('obj-c34-rebuild-sprintf', 0)),
-    (('obj-c34-rebuild-sprintf', 0), ('obj-pv2-slotmenu', 0)),
+    (('obj-c34-rebuild-sprintf', 0), ('obj-c34-rebuild-zljoin', 0)),
+    (('obj-c34-rebuild-zljoin', 0), ('obj-pv2-slotmenu', 0)),
     (('obj-c34-rebuild-uzi', 1), ('obj-c34-slotshadow-restore', 0)),
     (('obj-c34-slotshadow-restore', 0), ('obj-c34-restore-pset', 0)),
     (('obj-c34-restore-pset', 0), ('obj-pv2-slotmenu', 0)),
@@ -265,36 +275,34 @@ for src, dst in required_rename_chain:
     if (src, dst) not in conn:
         errors.append(f'missing rename/rebuild wire: {src} -> {dst}')
 
-# rebuild's sprintf must include the literal "append" selector AND both the
-# %ld (PC number) and %s (name) specifiers in one call -- without "append",
+# rebuild's sprintf must include the literal "append" selector -- without it,
 # every rebuilt umenu item is an unrecognized message and gets silently
 # dropped, leaving slotmenu with 0 items (the "umenu completely unresponsive"
-# bug found in the first Control-34 Max test); the dual-specifier form
-# replaced an earlier prepend-based design that also failed in real testing
-# (prepend's right inlet did not adopt a multi-atom message as a new prefix)
+# bug found in an earlier Control-34 Max test). It's single-specifier only
+# now (just the PC number) -- combining with the name is zl.join's job, not
+# sprintf's, since names can be more than one atom and %s only takes one.
 sprintf_box = box_by_id.get('obj-c34-rebuild-sprintf')
-expected_sprintf = 'sprintf append PC%ld - %s'
+expected_sprintf = 'sprintf append PC%ld -'
 if sprintf_box is None or sprintf_box['text'] != expected_sprintf:
     errors.append(f'obj-c34-rebuild-sprintf: expected {expected_sprintf!r}, '
                   f'got {sprintf_box and sprintf_box["text"]!r}')
-if 'obj-c34-rebuild-prependset' in box_by_id:
-    errors.append('obj-c34-rebuild-prependset should no longer exist '
-                  '(replaced by the dual-specifier sprintf)')
+if box_by_id.get('obj-c34-rebuild-zljoin', {}).get('text') != 'zl.join':
+    errors.append('obj-c34-rebuild-zljoin missing or not "zl.join"')
+for dead in ('obj-c34-rebuild-prependset', 'obj-c34-nameedit-outmode'):
+    if dead in box_by_id:
+        errors.append(f'{dead} should no longer exist')
 
-# namecoll's default values must be exactly one atom each -- %s substitutes
-# exactly one value, so a multi-atom default like ['Preset', '5'] would
-# silently drop everything after the first atom
-if namecoll is not None:
-    for row in namecoll.get('coll_data', {}).get('data', []):
-        if len(row['value']) != 1:
-            errors.append(f'obj-c34-namecoll key {row["key"]}: value has '
-                          f'{len(row["value"])} atoms, expected exactly 1: {row["value"]!r}')
+# namepack must be a bare, dynamically-armed `prepend` (single-atom slot
+# number as the prefix -- this direction of dynamic re-arming is fine, unlike
+# the rebuild's earlier failed attempt to re-arm a prefix with multiple atoms)
+if box_by_id.get('obj-c34-namepack', {}).get('text') != 'prepend':
+    errors.append('obj-c34-namepack should be a bare "prepend" (single-atom slot prefix)')
 
 # obj-c34-slotshadow (rename fetch) and obj-c34-slotshadow-restore (post-
 # rebuild selection restore) must be two DISTINCT objects, each feeding only
 # its own consumer -- sharing one shadow's outlet would make every selection
 # restore also silently overwrite a namecoll entry with a stale/uninitialized
-# name (the cross-talk bug found and fixed alongside the sprintf bug above)
+# name (a cross-talk bug found and fixed earlier this session)
 if (('obj-c34-slotshadow', 0), ('obj-c34-restore-pset', 0)) in conn:
     errors.append('obj-c34-slotshadow must not feed obj-c34-restore-pset directly '
                   '(use obj-c34-slotshadow-restore instead)')

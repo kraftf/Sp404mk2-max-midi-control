@@ -262,46 +262,56 @@ add_box({'id': 'obj-c34-nameedit', 'maxclass': 'textedit',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5100.0, 4600.0, 200.0, 22.0],
          'presentation': 1, 'presentation_rect': [750.0, 140.0, 240.0, 22.0]})
-# keymode/outputmode set as creation-time JSON attributes did NOT take effect
-# in real Max testing (Return still just inserted a line break, and the
-# output still arrived as a "text <words...>" message rather than a bare
-# symbol). Max's own textedit reference documents BOTH as also settable by
-# sending the attribute as a message to the inlet ("the message keymode 1
-# causes..."), which is the mechanism used here instead, fired once at load:
-#   keymode 1    -- Return outputs the buffer instead of inserting a line break
-#   outputmode 1 -- output is a single symbol, not a "text <words...>" message
-#                   (that "text" selector was otherwise silently swallowing
-#                   everything the user typed -- pack's symbol inlet only
-#                   keeps an incoming list's first atom, so the stored/
-#                   displayed name became the literal word "text")
+# keymode set as a creation-time JSON attribute did NOT take effect in real
+# Max testing (Return still just inserted a line break); Max's own textedit
+# reference documents it as also settable by sending the attribute as a
+# message to the inlet ("the message keymode 1 causes..."), which is the
+# mechanism used here instead, fired once at load. This part IS confirmed
+# fixed: Return now commits.
 add_box({'id': 'obj-c34-nameedit-lb', 'maxclass': 'newobj', 'text': 'loadbang',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': ['bang'],
          'patching_rect': [5260.0, 4600.0, 60.0, 22.0]})
 add_box({'id': 'obj-c34-nameedit-keymode', 'maxclass': 'message', 'text': 'keymode 1',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5330.0, 4600.0, 70.0, 20.0]})
-add_box({'id': 'obj-c34-nameedit-outmode', 'maxclass': 'message', 'text': 'outputmode 1',
-         'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5410.0, 4600.0, 90.0, 20.0]})
 add_line('obj-c34-nameedit-lb', 0, 'obj-c34-nameedit-keymode', 0)
-add_line('obj-c34-nameedit-lb', 0, 'obj-c34-nameedit-outmode', 0)
 add_line('obj-c34-nameedit-keymode', 0, 'obj-c34-nameedit', 0)
-add_line('obj-c34-nameedit-outmode', 0, 'obj-c34-nameedit', 0)
-add_box({'id': 'obj-c34-namet', 'maxclass': 'newobj', 'text': 't b b l',
-         'numinlets': 1, 'numoutlets': 3, 'outlettype': ['bang', 'bang', ''],
+# textedit ALWAYS prepends the literal selector "text" to whatever it
+# outputs, regardless of outputmode (an outputmode 1 message was tried and
+# had no effect -- confirmed by Max forum threads specifically about this
+# exact gotcha: "textedit prepends the word 'text' ... in front of whatever
+# you type"). The one confirmed, documented fix is `route text`, which
+# strips that selector and passes through only the real typed words (as a
+# list -- possibly more than one atom, since names can contain spaces).
+add_box({'id': 'obj-c34-route-text', 'maxclass': 'newobj', 'text': 'route text',
+         'numinlets': 1, 'numoutlets': 2, 'outlettype': ['', ''],
+         'patching_rect': [5100.0, 4615.0, 90.0, 22.0]})
+add_line('obj-c34-nameedit', 0, 'obj-c34-route-text', 0)
+# t b l b (right-to-left): out2 (FIRST) arms namepack's cold inlet with the
+# current slot number (a single int -- unlike the earlier failed attempt to
+# re-arm `prepend` with a multi-atom prefix, a single atom is exactly the
+# well-established "prepend store"/"prepend recall" idiom, just made
+# dynamic); out1 (SECOND) passes the real typed words through to namepack's
+# hot inlet, producing [slot, word1, word2, ...] into namecoll; out0 (LAST)
+# kicks off the rebuild once the store above has actually completed.
+add_box({'id': 'obj-c34-namet', 'maxclass': 'newobj', 'text': 't b l b',
+         'numinlets': 1, 'numoutlets': 3, 'outlettype': ['bang', '', 'bang'],
          'patching_rect': [5100.0, 4630.0, 60.0, 22.0]})
 add_box({'id': 'obj-c34-slot1-name', 'maxclass': 'newobj', 'text': '+ 1',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
          'patching_rect': [5100.0, 4660.0, 40.0, 22.0]})
-add_box({'id': 'obj-c34-namepack', 'maxclass': 'newobj', 'text': 'pack 0 s',
+# bare prepend, dynamically re-armed with the (single-atom) slot number --
+# NOT the same technique that failed for the rebuild routine below, since
+# there the attempted dynamic prefix was multiple atoms ("append PC5 -").
+add_box({'id': 'obj-c34-namepack', 'maxclass': 'newobj', 'text': 'prepend',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5160.0, 4660.0, 90.0, 22.0]})
 
-add_line('obj-c34-nameedit', 0, 'obj-c34-namet', 0)
-add_line('obj-c34-namet', 2, 'obj-c34-namepack', 1)        # FIRST: name -> cold store
-add_line('obj-c34-namet', 1, 'obj-c34-slotshadow', 0)      # SECOND: bang -> current slot (0-based)
+add_line('obj-c34-route-text', 0, 'obj-c34-namet', 0)
+add_line('obj-c34-namet', 2, 'obj-c34-slotshadow', 0)      # FIRST: bang -> current slot (0-based)
 add_line('obj-c34-slotshadow', 0, 'obj-c34-slot1-name', 0)
-add_line('obj-c34-slot1-name', 0, 'obj-c34-namepack', 0)   # hot: triggers [slot, name]
+add_line('obj-c34-slot1-name', 0, 'obj-c34-namepack', 1)   # cold: arm prefix = slot number
+add_line('obj-c34-namet', 1, 'obj-c34-namepack', 0)        # SECOND: hot -- triggers [slot, word1, ...]
 add_line('obj-c34-namepack', 0, 'obj-c34-namecoll', 0)     # store into coll
 
 # --- rebuild routine (shared by loadbang and rename) ---
@@ -329,20 +339,23 @@ add_box({'id': 'obj-c34-rebuild-split', 'maxclass': 'newobj', 'text': 't i i',
 add_box({'id': 'obj-c34-rebuild-minus1', 'maxclass': 'newobj', 'text': '- 1',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
          'patching_rect': [5160.0, 4820.0, 40.0, 22.0]})
-# single sprintf combining BOTH the PC number and the coll-stored name in one
-# call -- standard documented Max sprintf behavior (mixing %ld and %s is
-# routine). Replaces an earlier design that tried to build this message with
-# a *dynamically re-armed* `prepend` instead: that failed in real Max testing
-# (console flooded with `umenu: doesn't understand "Preset"`) because
-# prepend's right inlet does not adopt a multi-atom message as its new
-# prefix the way a single-specifier sprintf's output was assumed to be
-# usable there -- it silently left the prefix unset and just passed the
-# coll's raw content through unprefixed. A single dual-specifier sprintf
-# has no such intermediate hand-off to get wrong.
+# single-specifier sprintf builds ONLY "append PC<n> -" (proven pattern,
+# same as the existing `sprintf send Bus%d_X` objects). Combining this with
+# the coll-stored name is now done with `zl.join` instead of `%s` or
+# `prepend`: names can be more than one atom (spaces are separate atoms once
+# `route text` strips textedit's "text" selector), and both %s (exactly one
+# atom) and a dynamically re-armed `prepend` (confirmed broken for a
+# multi-atom prefix in real Max testing) silently drop anything past the
+# first atom. `zl.join` concatenates two LISTS of any length -- left/hot
+# inlet is the first segment and triggers output, right/cold inlet is the
+# second segment -- with no such limitation.
 add_box({'id': 'obj-c34-rebuild-sprintf', 'maxclass': 'newobj',
-         'text': 'sprintf append PC%ld - %s',
+         'text': 'sprintf append PC%ld -',
+         'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [5160.0, 4850.0, 100.0, 22.0]})
+add_box({'id': 'obj-c34-rebuild-zljoin', 'maxclass': 'newobj', 'text': 'zl.join',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5160.0, 4850.0, 140.0, 22.0]})
+         'patching_rect': [5160.0, 4880.0, 60.0, 22.0]})
 
 add_line('obj-c34-lb2', 0, 'obj-c34-rebuild-t', 0)
 add_line('obj-c34-namet', 0, 'obj-c34-rebuild-t', 0)       # LAST (rename path): kick off rebuild
@@ -352,10 +365,11 @@ add_line('obj-c34-rebuild-t', 0, 'obj-c34-rebuild-uzi', 0) # SECOND: start loop
 
 add_line('obj-c34-rebuild-uzi', 2, 'obj-c34-rebuild-split', 0)  # counter 1..128
 add_line('obj-c34-rebuild-split', 1, 'obj-c34-namecoll', 0)     # FIRST: lookup stored name
-add_line('obj-c34-namecoll', 0, 'obj-c34-rebuild-sprintf', 1)   # cold: %s = name
+add_line('obj-c34-namecoll', 0, 'obj-c34-rebuild-zljoin', 1)    # cold: 2nd segment = name
 add_line('obj-c34-rebuild-split', 0, 'obj-c34-rebuild-minus1', 0)  # SECOND: pc# path
-add_line('obj-c34-rebuild-minus1', 0, 'obj-c34-rebuild-sprintf', 0)  # hot: %ld, triggers output
-add_line('obj-c34-rebuild-sprintf', 0, 'obj-pv2-slotmenu', 0)
+add_line('obj-c34-rebuild-minus1', 0, 'obj-c34-rebuild-sprintf', 0)
+add_line('obj-c34-rebuild-sprintf', 0, 'obj-c34-rebuild-zljoin', 0)  # hot: 1st segment, triggers join
+add_line('obj-c34-rebuild-zljoin', 0, 'obj-pv2-slotmenu', 0)
 
 # restore the visible selection after the rebuild (clear wipes it)
 add_box({'id': 'obj-c34-restore-pset', 'maxclass': 'newobj', 'text': 'prepend set',

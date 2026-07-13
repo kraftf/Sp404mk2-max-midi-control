@@ -6,25 +6,25 @@ system with pattrstorage/pattrforward and passed all no-hardware Max tests. Cont
 added the 5 DFX slot assignments to the preset system, and fixed two Max-test-found bugs
 (cross-group bus-switch label scramble; post-SAVE/RECALL MIDI-channel-5 residue) — ALL
 FOUR retested and confirmed working by the user in Max (2026-07-12, no hardware).
-Roland_SP404MK2_Control-34.maxpat (781 objects, 1244 lines) builds on Control-33: adds
+Roland_SP404MK2_Control-34.maxpat (782 objects, 1244 lines) builds on Control-33: adds
 MIDI Control Input (external CC control of the 8 hardware-facing controls) and expands
 the preset system to 128 slots (full PC range) with per-preset renaming — see
 "Control-34" section below.
 User-tested in Max (2026-07-12): MIDI Control Input confirmed working first try (only
-the mapped dial moves, only that one CC is sent). The 128-preset/rename system took FIVE
-rounds to get fully working (numbering and SAVE/RECALL are now both confirmed correct;
-renaming is the one piece still in progress): (1) empty/unresponsive umenu — missing
-`append` selector in the rebuild's sprintf; (2) still broken — a `prepend`-based part of
-that same fix didn't adopt its dynamic prefix the way assumed, replaced with a single
-dual-specifier sprintf; (3) items all shown but numbered wrong — `uzi 128 3`'s "3" was
-misread as an outlet selector when it's actually the counter's starting value, so it
-counted 3..130 instead of 1..128 (fix confirmed correct on retest); (4)/(5) renaming
-still doesn't work — `textedit`'s `keymode`/`outputmode` set as creation-time JSON
-attributes never actually took effect (Return still just inserts a line break, and the
-committed text was always the literal word "text" instead of what was typed); replaced
-with the documented message-based mechanism (`keymode 1`/`outputmode 1` sent to the
-object at load) instead of a saved attribute. See the "Control-34" section below for the
-full sequence. NOT yet retested after this fifth fix.
+the mapped dial moves, only that one CC is sent). Numbering and SAVE/RECALL are both
+confirmed correct. Renaming took SIX rounds total to converge: (1) empty/unresponsive
+umenu — missing `append` selector in the rebuild's sprintf; (2) still broken — a
+`prepend`-based part of that fix didn't adopt its dynamic prefix the way assumed,
+replaced with a dual-specifier sprintf; (3) items shown but numbered wrong — `uzi 128
+3`'s "3" was misread as an outlet selector when it's the counter's starting value
+(fix confirmed correct); (4) Return didn't commit — `textedit`'s `keymode` attribute set
+at creation time never took effect, fixed via an explicit runtime message instead (fix
+confirmed correct); (5)/(6) committed text was always the literal word "text" — an
+`outputmode 1` message was tried and also had no effect; the actual, confirmed-by-Max-
+forums behavior is that `textedit` UNCONDITIONALLY prepends a `text` selector to its
+output, fixed with `route text` to strip it, plus a `zl.join`-based rebuild (replacing
+`%s`/`prepend`, both limited to one atom) so multi-word names survive intact. See the
+"Control-34" section below for the full sequence. NOT yet retested after this sixth fix.
 NOT YET tested: with real SP-404 MK2 hardware attached (per-bus MIDI channel dispatch,
 PC 0-7 recall to the actual unit — now PC 0-127).
 
@@ -284,6 +284,47 @@ RETEST: press Return in the rename box -- must commit (not insert a line break);
 resulting preset label must show the actual typed name, not the word "text". This is the
 fifth attempt at the renaming half of this test; numbering and SAVE/RECALL are confirmed
 already and don't need retesting.
+
+### Sixth bug found on retest — outputmode never fixes it; textedit's "text" prefix is unconditional
+User retested: Return now commits (bug 4's keymode fix confirmed working). But the
+"text" problem persisted exactly as before -- typed name still replaced by the literal
+word "text" -- meaning the `outputmode 1` message had no effect either.
+
+Looked this up properly this time (a Max forums thread titled almost exactly "How to
+delete 'text' that is prepended to output of textedit object?"): `textedit` ALWAYS
+prepends the literal selector `text` to whatever it outputs, as an actual message
+selector -- e.g. typing "MyKit" produces the message `text MyKit`, not the symbol
+`MyKit`. This is NOT something `outputmode` turns off (that assumption, made when fixing
+bug 4, was simply wrong -- `outputmode` governs a different aspect of formatting, not
+whether the "text" selector is present). The confirmed, standard fix used throughout Max
+patches for this exact behavior is a `route text` object, which matches the "text"
+selector and forwards everything after it, stripped, through its first outlet.
+
+This also surfaced a second, previously-latent defect: preset names can be MORE than one
+word (multiple atoms, once "text" is stripped by route), but `obj-c34-namepack` (`pack 0
+s`) only keeps the first atom sent to a symbol inlet, and the rebuild's `sprintf`'s `%s`
+specifier also only substitutes exactly one atom -- both would have silently truncated
+any multi-word rename to its first word even after the "text" bug was fixed. Fixed both
+at once:
+- `obj-c34-route-text` (`route text`) inserted between `obj-c34-nameedit` and
+  `obj-c34-namet`, stripping the "text" selector before anything else sees the message.
+- `obj-c34-namet` restructured `t b b l` → `t b l b`: out2 (FIRST) arms `obj-c34-namepack`
+  cold inlet with the current slot number (a SINGLE atom -- this direction of dynamic
+  `prepend` re-arming is fine, unlike bug 2's failed multi-atom attempt); out1 (SECOND)
+  passes the actual typed words (list, any length) into `namepack`'s hot inlet, producing
+  `[slot, word1, word2, ...]` into `namecoll`; out0 (LAST) kicks off the rebuild.
+  `obj-c34-namepack` changed from `pack 0 s` to a bare `prepend`.
+- Rebuild routine: `obj-c34-rebuild-sprintf` reverted to single-specifier
+  `sprintf append PC%ld -` (just the PC number again); combining it with the coll's
+  (possibly multi-atom) stored name is now `obj-c34-rebuild-zljoin` (`zl.join`), which
+  concatenates two lists of any length -- left/hot inlet is the first segment and
+  triggers output, right/cold inlet is the second segment. No `%s`, no re-armed
+  `prepend`, no atom-count assumptions anywhere in this path anymore.
+- Removed `obj-c34-nameedit-outmode` (the ineffective `outputmode 1` message) entirely.
+`validate_control34.py` updated throughout for the new object names and wiring.
+RETEST: rename a preset to something with a SPACE in it (e.g. "My Kit") -- the full
+phrase must appear, not just the first word, not the word "text". This is the sixth
+attempt at the renaming half of this test.
 
 ## 33: SYNC-expr ternary fix + DFX slots into presets
 Generated by `sp404gen/build_control33.py` (from Control-32); structurally validated by

@@ -79037,19 +79037,20 @@
    },
    {
     "box": {
-     "id": "obj-c34-nameedit-outmode",
-     "maxclass": "message",
-     "text": "outputmode 1",
-     "numinlets": 2,
-     "numoutlets": 1,
+     "id": "obj-c34-route-text",
+     "maxclass": "newobj",
+     "text": "route text",
+     "numinlets": 1,
+     "numoutlets": 2,
      "outlettype": [
+      "",
       ""
      ],
      "patching_rect": [
-      5410.0,
-      4600.0,
+      5100.0,
+      4615.0,
       90.0,
-      20.0
+      22.0
      ]
     }
    },
@@ -79057,13 +79058,13 @@
     "box": {
      "id": "obj-c34-namet",
      "maxclass": "newobj",
-     "text": "t b b l",
+     "text": "t b l b",
      "numinlets": 1,
      "numoutlets": 3,
      "outlettype": [
       "bang",
-      "bang",
-      ""
+      "",
+      "bang"
      ],
      "patching_rect": [
       5100.0,
@@ -79095,7 +79096,7 @@
     "box": {
      "id": "obj-c34-namepack",
      "maxclass": "newobj",
-     "text": "pack 0 s",
+     "text": "prepend",
      "numinlets": 2,
      "numoutlets": 1,
      "outlettype": [
@@ -79225,8 +79226,8 @@
     "box": {
      "id": "obj-c34-rebuild-sprintf",
      "maxclass": "newobj",
-     "text": "sprintf append PC%ld - %s",
-     "numinlets": 2,
+     "text": "sprintf append PC%ld -",
+     "numinlets": 1,
      "numoutlets": 1,
      "outlettype": [
       ""
@@ -79234,7 +79235,25 @@
      "patching_rect": [
       5160.0,
       4850.0,
-      140.0,
+      100.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-rebuild-zljoin",
+     "maxclass": "newobj",
+     "text": "zl.join",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ],
+     "patching_rect": [
+      5160.0,
+      4880.0,
+      60.0,
       22.0
      ]
     }
@@ -94026,18 +94045,6 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-nameedit-lb",
-      0
-     ],
-     "destination": [
-      "obj-c34-nameedit-outmode",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
       "obj-c34-nameedit-keymode",
       0
      ],
@@ -94050,11 +94057,11 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-nameedit-outmode",
+      "obj-c34-nameedit",
       0
      ],
      "destination": [
-      "obj-c34-nameedit",
+      "obj-c34-route-text",
       0
      ]
     }
@@ -94062,7 +94069,7 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-nameedit",
+      "obj-c34-route-text",
       0
      ],
      "destination": [
@@ -94078,6 +94085,30 @@
       2
      ],
      "destination": [
+      "obj-c34-slotshadow",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-slotshadow",
+      0
+     ],
+     "destination": [
+      "obj-c34-slot1-name",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-slot1-name",
+      0
+     ],
+     "destination": [
       "obj-c34-namepack",
       1
      ]
@@ -94088,30 +94119,6 @@
      "source": [
       "obj-c34-namet",
       1
-     ],
-     "destination": [
-      "obj-c34-slotshadow",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-slotshadow",
-      0
-     ],
-     "destination": [
-      "obj-c34-slot1-name",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-slot1-name",
-      0
      ],
      "destination": [
       "obj-c34-namepack",
@@ -94222,7 +94229,7 @@
       0
      ],
      "destination": [
-      "obj-c34-rebuild-sprintf",
+      "obj-c34-rebuild-zljoin",
       1
      ]
     }
@@ -94255,6 +94262,18 @@
     "patchline": {
      "source": [
       "obj-c34-rebuild-sprintf",
+      0
+     ],
+     "destination": [
+      "obj-c34-rebuild-zljoin",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-rebuild-zljoin",
       0
      ],
      "destination": [
