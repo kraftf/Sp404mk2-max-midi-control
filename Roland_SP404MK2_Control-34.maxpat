@@ -78131,6 +78131,932 @@
    },
    {
     "box": {
+     "id": "obj-c34-namecache",
+     "maxclass": "newobj",
+     "text": "coll obj-c34-namecache @embed 1",
+     "numinlets": 1,
+     "numoutlets": 4,
+     "outlettype": [
+      "",
+      "",
+      "",
+      ""
+     ],
+     "saved_object_attributes": {
+      "embed": 1,
+      "precision": 6
+     },
+     "patching_rect": [
+      5100.0,
+      4500.0,
+      180.0,
+      22.0
+     ],
+     "coll_data": {
+      "count": 128,
+      "data": [
+       {
+        "key": 1,
+        "value": [
+         "Preset",
+         "1"
+        ]
+       },
+       {
+        "key": 2,
+        "value": [
+         "Preset",
+         "2"
+        ]
+       },
+       {
+        "key": 3,
+        "value": [
+         "Preset",
+         "3"
+        ]
+       },
+       {
+        "key": 4,
+        "value": [
+         "Preset",
+         "4"
+        ]
+       },
+       {
+        "key": 5,
+        "value": [
+         "Preset",
+         "5"
+        ]
+       },
+       {
+        "key": 6,
+        "value": [
+         "Preset",
+         "6"
+        ]
+       },
+       {
+        "key": 7,
+        "value": [
+         "Preset",
+         "7"
+        ]
+       },
+       {
+        "key": 8,
+        "value": [
+         "Preset",
+         "8"
+        ]
+       },
+       {
+        "key": 9,
+        "value": [
+         "Preset",
+         "9"
+        ]
+       },
+       {
+        "key": 10,
+        "value": [
+         "Preset",
+         "10"
+        ]
+       },
+       {
+        "key": 11,
+        "value": [
+         "Preset",
+         "11"
+        ]
+       },
+       {
+        "key": 12,
+        "value": [
+         "Preset",
+         "12"
+        ]
+       },
+       {
+        "key": 13,
+        "value": [
+         "Preset",
+         "13"
+        ]
+       },
+       {
+        "key": 14,
+        "value": [
+         "Preset",
+         "14"
+        ]
+       },
+       {
+        "key": 15,
+        "value": [
+         "Preset",
+         "15"
+        ]
+       },
+       {
+        "key": 16,
+        "value": [
+         "Preset",
+         "16"
+        ]
+       },
+       {
+        "key": 17,
+        "value": [
+         "Preset",
+         "17"
+        ]
+       },
+       {
+        "key": 18,
+        "value": [
+         "Preset",
+         "18"
+        ]
+       },
+       {
+        "key": 19,
+        "value": [
+         "Preset",
+         "19"
+        ]
+       },
+       {
+        "key": 20,
+        "value": [
+         "Preset",
+         "20"
+        ]
+       },
+       {
+        "key": 21,
+        "value": [
+         "Preset",
+         "21"
+        ]
+       },
+       {
+        "key": 22,
+        "value": [
+         "Preset",
+         "22"
+        ]
+       },
+       {
+        "key": 23,
+        "value": [
+         "Preset",
+         "23"
+        ]
+       },
+       {
+        "key": 24,
+        "value": [
+         "Preset",
+         "24"
+        ]
+       },
+       {
+        "key": 25,
+        "value": [
+         "Preset",
+         "25"
+        ]
+       },
+       {
+        "key": 26,
+        "value": [
+         "Preset",
+         "26"
+        ]
+       },
+       {
+        "key": 27,
+        "value": [
+         "Preset",
+         "27"
+        ]
+       },
+       {
+        "key": 28,
+        "value": [
+         "Preset",
+         "28"
+        ]
+       },
+       {
+        "key": 29,
+        "value": [
+         "Preset",
+         "29"
+        ]
+       },
+       {
+        "key": 30,
+        "value": [
+         "Preset",
+         "30"
+        ]
+       },
+       {
+        "key": 31,
+        "value": [
+         "Preset",
+         "31"
+        ]
+       },
+       {
+        "key": 32,
+        "value": [
+         "Preset",
+         "32"
+        ]
+       },
+       {
+        "key": 33,
+        "value": [
+         "Preset",
+         "33"
+        ]
+       },
+       {
+        "key": 34,
+        "value": [
+         "Preset",
+         "34"
+        ]
+       },
+       {
+        "key": 35,
+        "value": [
+         "Preset",
+         "35"
+        ]
+       },
+       {
+        "key": 36,
+        "value": [
+         "Preset",
+         "36"
+        ]
+       },
+       {
+        "key": 37,
+        "value": [
+         "Preset",
+         "37"
+        ]
+       },
+       {
+        "key": 38,
+        "value": [
+         "Preset",
+         "38"
+        ]
+       },
+       {
+        "key": 39,
+        "value": [
+         "Preset",
+         "39"
+        ]
+       },
+       {
+        "key": 40,
+        "value": [
+         "Preset",
+         "40"
+        ]
+       },
+       {
+        "key": 41,
+        "value": [
+         "Preset",
+         "41"
+        ]
+       },
+       {
+        "key": 42,
+        "value": [
+         "Preset",
+         "42"
+        ]
+       },
+       {
+        "key": 43,
+        "value": [
+         "Preset",
+         "43"
+        ]
+       },
+       {
+        "key": 44,
+        "value": [
+         "Preset",
+         "44"
+        ]
+       },
+       {
+        "key": 45,
+        "value": [
+         "Preset",
+         "45"
+        ]
+       },
+       {
+        "key": 46,
+        "value": [
+         "Preset",
+         "46"
+        ]
+       },
+       {
+        "key": 47,
+        "value": [
+         "Preset",
+         "47"
+        ]
+       },
+       {
+        "key": 48,
+        "value": [
+         "Preset",
+         "48"
+        ]
+       },
+       {
+        "key": 49,
+        "value": [
+         "Preset",
+         "49"
+        ]
+       },
+       {
+        "key": 50,
+        "value": [
+         "Preset",
+         "50"
+        ]
+       },
+       {
+        "key": 51,
+        "value": [
+         "Preset",
+         "51"
+        ]
+       },
+       {
+        "key": 52,
+        "value": [
+         "Preset",
+         "52"
+        ]
+       },
+       {
+        "key": 53,
+        "value": [
+         "Preset",
+         "53"
+        ]
+       },
+       {
+        "key": 54,
+        "value": [
+         "Preset",
+         "54"
+        ]
+       },
+       {
+        "key": 55,
+        "value": [
+         "Preset",
+         "55"
+        ]
+       },
+       {
+        "key": 56,
+        "value": [
+         "Preset",
+         "56"
+        ]
+       },
+       {
+        "key": 57,
+        "value": [
+         "Preset",
+         "57"
+        ]
+       },
+       {
+        "key": 58,
+        "value": [
+         "Preset",
+         "58"
+        ]
+       },
+       {
+        "key": 59,
+        "value": [
+         "Preset",
+         "59"
+        ]
+       },
+       {
+        "key": 60,
+        "value": [
+         "Preset",
+         "60"
+        ]
+       },
+       {
+        "key": 61,
+        "value": [
+         "Preset",
+         "61"
+        ]
+       },
+       {
+        "key": 62,
+        "value": [
+         "Preset",
+         "62"
+        ]
+       },
+       {
+        "key": 63,
+        "value": [
+         "Preset",
+         "63"
+        ]
+       },
+       {
+        "key": 64,
+        "value": [
+         "Preset",
+         "64"
+        ]
+       },
+       {
+        "key": 65,
+        "value": [
+         "Preset",
+         "65"
+        ]
+       },
+       {
+        "key": 66,
+        "value": [
+         "Preset",
+         "66"
+        ]
+       },
+       {
+        "key": 67,
+        "value": [
+         "Preset",
+         "67"
+        ]
+       },
+       {
+        "key": 68,
+        "value": [
+         "Preset",
+         "68"
+        ]
+       },
+       {
+        "key": 69,
+        "value": [
+         "Preset",
+         "69"
+        ]
+       },
+       {
+        "key": 70,
+        "value": [
+         "Preset",
+         "70"
+        ]
+       },
+       {
+        "key": 71,
+        "value": [
+         "Preset",
+         "71"
+        ]
+       },
+       {
+        "key": 72,
+        "value": [
+         "Preset",
+         "72"
+        ]
+       },
+       {
+        "key": 73,
+        "value": [
+         "Preset",
+         "73"
+        ]
+       },
+       {
+        "key": 74,
+        "value": [
+         "Preset",
+         "74"
+        ]
+       },
+       {
+        "key": 75,
+        "value": [
+         "Preset",
+         "75"
+        ]
+       },
+       {
+        "key": 76,
+        "value": [
+         "Preset",
+         "76"
+        ]
+       },
+       {
+        "key": 77,
+        "value": [
+         "Preset",
+         "77"
+        ]
+       },
+       {
+        "key": 78,
+        "value": [
+         "Preset",
+         "78"
+        ]
+       },
+       {
+        "key": 79,
+        "value": [
+         "Preset",
+         "79"
+        ]
+       },
+       {
+        "key": 80,
+        "value": [
+         "Preset",
+         "80"
+        ]
+       },
+       {
+        "key": 81,
+        "value": [
+         "Preset",
+         "81"
+        ]
+       },
+       {
+        "key": 82,
+        "value": [
+         "Preset",
+         "82"
+        ]
+       },
+       {
+        "key": 83,
+        "value": [
+         "Preset",
+         "83"
+        ]
+       },
+       {
+        "key": 84,
+        "value": [
+         "Preset",
+         "84"
+        ]
+       },
+       {
+        "key": 85,
+        "value": [
+         "Preset",
+         "85"
+        ]
+       },
+       {
+        "key": 86,
+        "value": [
+         "Preset",
+         "86"
+        ]
+       },
+       {
+        "key": 87,
+        "value": [
+         "Preset",
+         "87"
+        ]
+       },
+       {
+        "key": 88,
+        "value": [
+         "Preset",
+         "88"
+        ]
+       },
+       {
+        "key": 89,
+        "value": [
+         "Preset",
+         "89"
+        ]
+       },
+       {
+        "key": 90,
+        "value": [
+         "Preset",
+         "90"
+        ]
+       },
+       {
+        "key": 91,
+        "value": [
+         "Preset",
+         "91"
+        ]
+       },
+       {
+        "key": 92,
+        "value": [
+         "Preset",
+         "92"
+        ]
+       },
+       {
+        "key": 93,
+        "value": [
+         "Preset",
+         "93"
+        ]
+       },
+       {
+        "key": 94,
+        "value": [
+         "Preset",
+         "94"
+        ]
+       },
+       {
+        "key": 95,
+        "value": [
+         "Preset",
+         "95"
+        ]
+       },
+       {
+        "key": 96,
+        "value": [
+         "Preset",
+         "96"
+        ]
+       },
+       {
+        "key": 97,
+        "value": [
+         "Preset",
+         "97"
+        ]
+       },
+       {
+        "key": 98,
+        "value": [
+         "Preset",
+         "98"
+        ]
+       },
+       {
+        "key": 99,
+        "value": [
+         "Preset",
+         "99"
+        ]
+       },
+       {
+        "key": 100,
+        "value": [
+         "Preset",
+         "100"
+        ]
+       },
+       {
+        "key": 101,
+        "value": [
+         "Preset",
+         "101"
+        ]
+       },
+       {
+        "key": 102,
+        "value": [
+         "Preset",
+         "102"
+        ]
+       },
+       {
+        "key": 103,
+        "value": [
+         "Preset",
+         "103"
+        ]
+       },
+       {
+        "key": 104,
+        "value": [
+         "Preset",
+         "104"
+        ]
+       },
+       {
+        "key": 105,
+        "value": [
+         "Preset",
+         "105"
+        ]
+       },
+       {
+        "key": 106,
+        "value": [
+         "Preset",
+         "106"
+        ]
+       },
+       {
+        "key": 107,
+        "value": [
+         "Preset",
+         "107"
+        ]
+       },
+       {
+        "key": 108,
+        "value": [
+         "Preset",
+         "108"
+        ]
+       },
+       {
+        "key": 109,
+        "value": [
+         "Preset",
+         "109"
+        ]
+       },
+       {
+        "key": 110,
+        "value": [
+         "Preset",
+         "110"
+        ]
+       },
+       {
+        "key": 111,
+        "value": [
+         "Preset",
+         "111"
+        ]
+       },
+       {
+        "key": 112,
+        "value": [
+         "Preset",
+         "112"
+        ]
+       },
+       {
+        "key": 113,
+        "value": [
+         "Preset",
+         "113"
+        ]
+       },
+       {
+        "key": 114,
+        "value": [
+         "Preset",
+         "114"
+        ]
+       },
+       {
+        "key": 115,
+        "value": [
+         "Preset",
+         "115"
+        ]
+       },
+       {
+        "key": 116,
+        "value": [
+         "Preset",
+         "116"
+        ]
+       },
+       {
+        "key": 117,
+        "value": [
+         "Preset",
+         "117"
+        ]
+       },
+       {
+        "key": 118,
+        "value": [
+         "Preset",
+         "118"
+        ]
+       },
+       {
+        "key": 119,
+        "value": [
+         "Preset",
+         "119"
+        ]
+       },
+       {
+        "key": 120,
+        "value": [
+         "Preset",
+         "120"
+        ]
+       },
+       {
+        "key": 121,
+        "value": [
+         "Preset",
+         "121"
+        ]
+       },
+       {
+        "key": 122,
+        "value": [
+         "Preset",
+         "122"
+        ]
+       },
+       {
+        "key": 123,
+        "value": [
+         "Preset",
+         "123"
+        ]
+       },
+       {
+        "key": 124,
+        "value": [
+         "Preset",
+         "124"
+        ]
+       },
+       {
+        "key": 125,
+        "value": [
+         "Preset",
+         "125"
+        ]
+       },
+       {
+        "key": 126,
+        "value": [
+         "Preset",
+         "126"
+        ]
+       },
+       {
+        "key": 127,
+        "value": [
+         "Preset",
+         "127"
+        ]
+       },
+       {
+        "key": 128,
+        "value": [
+         "Preset",
+         "128"
+        ]
+       }
+      ]
+     }
+    }
+   },
+   {
+    "box": {
      "id": "obj-c34-slotshadow",
      "maxclass": "newobj",
      "text": "int 0",
@@ -78373,62 +79299,6 @@
    },
    {
     "box": {
-     "id": "obj-c34-refresh-t",
-     "maxclass": "newobj",
-     "text": "t b b",
-     "numinlets": 1,
-     "numoutlets": 2,
-     "outlettype": [
-      "bang",
-      "bang"
-     ],
-     "patching_rect": [
-      5100.0,
-      4830.0,
-      50.0,
-      22.0
-     ]
-    }
-   },
-   {
-    "box": {
-     "id": "obj-c34-clearopen",
-     "maxclass": "newobj",
-     "text": "t 1 clear",
-     "numinlets": 1,
-     "numoutlets": 2,
-     "outlettype": [
-      "int",
-      "clear"
-     ],
-     "patching_rect": [
-      5100.0,
-      4860.0,
-      60.0,
-      22.0
-     ]
-    }
-   },
-   {
-    "box": {
-     "id": "obj-c34-gate",
-     "maxclass": "newobj",
-     "text": "gate 1",
-     "numinlets": 2,
-     "numoutlets": 1,
-     "outlettype": [
-      ""
-     ],
-     "patching_rect": [
-      5100.0,
-      4890.0,
-      40.0,
-      22.0
-     ]
-    }
-   },
-   {
-    "box": {
      "id": "obj-c34-getslotnamelist",
      "maxclass": "message",
      "text": "getslotnamelist",
@@ -78439,7 +79309,7 @@
      ],
      "patching_rect": [
       5170.0,
-      4860.0,
+      4800.0,
       110.0,
       20.0
      ]
@@ -78485,24 +79355,6 @@
    },
    {
     "box": {
-     "id": "obj-c34-gateclose",
-     "maxclass": "newobj",
-     "text": "t 0",
-     "numinlets": 1,
-     "numoutlets": 1,
-     "outlettype": [
-      "int"
-     ],
-     "patching_rect": [
-      5170.0,
-      4980.0,
-      30.0,
-      22.0
-     ]
-    }
-   },
-   {
-    "box": {
      "id": "obj-c34-slotname-unpack",
      "maxclass": "newobj",
      "text": "unpack 0 s",
@@ -78513,7 +79365,7 @@
       ""
      ],
      "patching_rect": [
-      5250.0,
+      5170.0,
       4980.0,
       70.0,
       22.0
@@ -78522,62 +79374,7 @@
    },
    {
     "box": {
-     "id": "obj-c34-slotname-notzero",
-     "maxclass": "newobj",
-     "text": "select 0",
-     "numinlets": 1,
-     "numoutlets": 2,
-     "outlettype": [
-      "bang",
-      "int"
-     ],
-     "patching_rect": [
-      5250.0,
-      5000.0,
-      60.0,
-      22.0
-     ]
-    }
-   },
-   {
-    "box": {
-     "id": "obj-c34-slotname-minus1",
-     "maxclass": "newobj",
-     "text": "- 1",
-     "numinlets": 2,
-     "numoutlets": 1,
-     "outlettype": [
-      "int"
-     ],
-     "patching_rect": [
-      5250.0,
-      5015.0,
-      40.0,
-      22.0
-     ]
-    }
-   },
-   {
-    "box": {
-     "id": "obj-c34-slotname-sprintf",
-     "maxclass": "newobj",
-     "text": "sprintf append PC%ld -",
-     "numinlets": 1,
-     "numoutlets": 1,
-     "outlettype": [
-      ""
-     ],
-     "patching_rect": [
-      5250.0,
-      5040.0,
-      100.0,
-      22.0
-     ]
-    }
-   },
-   {
-    "box": {
-     "id": "obj-c34-slotname-zljoin",
+     "id": "obj-c34-cache-zljoin",
      "maxclass": "newobj",
      "text": "zl.join",
      "numinlets": 2,
@@ -78586,8 +79383,138 @@
       ""
      ],
      "patching_rect": [
-      5250.0,
+      5170.0,
+      5010.0,
+      60.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-rebuild-t",
+     "maxclass": "newobj",
+     "text": "t b b",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "outlettype": [
+      "bang",
+      "bang"
+     ],
+     "patching_rect": [
+      5170.0,
+      5040.0,
+      50.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-clear-msg",
+     "maxclass": "message",
+     "text": "clear",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ],
+     "patching_rect": [
+      5170.0,
       5070.0,
+      50.0,
+      20.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-rebuild-uzi",
+     "maxclass": "newobj",
+     "text": "uzi 128",
+     "numinlets": 2,
+     "numoutlets": 3,
+     "outlettype": [
+      "bang",
+      "bang",
+      "int"
+     ],
+     "patching_rect": [
+      5170.0,
+      5100.0,
+      70.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-rebuild-split",
+     "maxclass": "newobj",
+     "text": "t i i",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "outlettype": [
+      "int",
+      "int"
+     ],
+     "patching_rect": [
+      5170.0,
+      5130.0,
+      50.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-rebuild-minus1",
+     "maxclass": "newobj",
+     "text": "- 1",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      "int"
+     ],
+     "patching_rect": [
+      5170.0,
+      5160.0,
+      40.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-rebuild-sprintf",
+     "maxclass": "newobj",
+     "text": "sprintf append PC%ld -",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ],
+     "patching_rect": [
+      5170.0,
+      5190.0,
+      100.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c34-rebuild-zljoin",
+     "maxclass": "newobj",
+     "text": "zl.join",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ],
+     "patching_rect": [
+      5170.0,
+      5220.0,
       60.0,
       22.0
      ]
@@ -93474,7 +94401,7 @@
       0
      ],
      "destination": [
-      "obj-c34-refresh-t",
+      "obj-c34-getslotnamelist",
       0
      ]
     }
@@ -93506,82 +94433,10 @@
    {
     "patchline": {
      "source": [
-      "obj-pv2-save-t",
-      0
-     ],
-     "destination": [
-      "obj-c34-refresh-t",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
       "obj-c34-lb2",
       0
      ],
      "destination": [
-      "obj-c34-refresh-t",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-refresh-t",
-      1
-     ],
-     "destination": [
-      "obj-c34-clearopen",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-clearopen",
-      1
-     ],
-     "destination": [
-      "obj-pv2-slotmenu",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-clearopen",
-      0
-     ],
-     "destination": [
-      "obj-c34-gate",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-gate",
-      0
-     ],
-     "destination": [
-      "obj-pv2-slotmenu",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-refresh-t",
-      0
-     ],
-     "destination": [
       "obj-c34-getslotnamelist",
       0
      ]
@@ -93595,6 +94450,18 @@
      ],
      "destination": [
       "obj-pv2-pattrstorage",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-pv2-save-t",
+      0
+     ],
+     "destination": [
+      "obj-c34-getslotnamelist",
       0
      ]
     }
@@ -93627,10 +94494,10 @@
     "patchline": {
      "source": [
       "obj-c34-slotname-done",
-      0
+      1
      ],
      "destination": [
-      "obj-c34-gateclose",
+      "obj-c34-slotname-unpack",
       0
      ]
     }
@@ -93638,11 +94505,35 @@
    {
     "patchline": {
      "source": [
-      "obj-c34-gateclose",
+      "obj-c34-slotname-unpack",
+      1
+     ],
+     "destination": [
+      "obj-c34-cache-zljoin",
+      1
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-slotname-unpack",
       0
      ],
      "destination": [
-      "obj-c34-gate",
+      "obj-c34-cache-zljoin",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-cache-zljoin",
+      0
+     ],
+     "destination": [
+      "obj-c34-namecache",
       0
      ]
     }
@@ -93652,94 +94543,142 @@
      "source": [
       "obj-c34-slotname-done",
       0
+     ],
+     "destination": [
+      "obj-c34-rebuild-t",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-rebuild-t",
+      1
+     ],
+     "destination": [
+      "obj-c34-clear-msg",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-clear-msg",
+      0
+     ],
+     "destination": [
+      "obj-pv2-slotmenu",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-rebuild-t",
+      0
+     ],
+     "destination": [
+      "obj-c34-rebuild-uzi",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-rebuild-uzi",
+      2
+     ],
+     "destination": [
+      "obj-c34-rebuild-split",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-rebuild-split",
+      1
+     ],
+     "destination": [
+      "obj-c34-namecache",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-rebuild-split",
+      0
+     ],
+     "destination": [
+      "obj-c34-rebuild-minus1",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-rebuild-minus1",
+      0
+     ],
+     "destination": [
+      "obj-c34-rebuild-sprintf",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-namecache",
+      0
+     ],
+     "destination": [
+      "obj-c34-rebuild-zljoin",
+      1
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-rebuild-sprintf",
+      0
+     ],
+     "destination": [
+      "obj-c34-rebuild-zljoin",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-rebuild-zljoin",
+      0
+     ],
+     "destination": [
+      "obj-pv2-slotmenu",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-rebuild-uzi",
+      1
      ],
      "destination": [
       "obj-c34-slotshadow",
       0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-slotname-done",
-      1
-     ],
-     "destination": [
-      "obj-c34-slotname-unpack",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-slotname-unpack",
-      0
-     ],
-     "destination": [
-      "obj-c34-slotname-notzero",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-slotname-notzero",
-      1
-     ],
-     "destination": [
-      "obj-c34-slotname-minus1",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-slotname-minus1",
-      0
-     ],
-     "destination": [
-      "obj-c34-slotname-sprintf",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-slotname-unpack",
-      1
-     ],
-     "destination": [
-      "obj-c34-slotname-zljoin",
-      1
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-slotname-sprintf",
-      0
-     ],
-     "destination": [
-      "obj-c34-slotname-zljoin",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c34-slotname-zljoin",
-      0
-     ],
-     "destination": [
-      "obj-c34-gate",
-      1
      ]
     }
    }

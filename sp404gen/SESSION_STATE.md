@@ -6,22 +6,23 @@ system with pattrstorage/pattrforward and passed all no-hardware Max tests. Cont
 added the 5 DFX slot assignments to the preset system, and fixed two Max-test-found bugs
 (cross-group bus-switch label scramble; post-SAVE/RECALL MIDI-channel-5 residue) — ALL
 FOUR retested and confirmed working by the user in Max (2026-07-12, no hardware).
-Roland_SP404MK2_Control-34.maxpat (785 objects, 1249 lines) builds on Control-33: adds
+Roland_SP404MK2_Control-34.maxpat (788 objects, 1254 lines) builds on Control-33: adds
 MIDI Control Input (external CC control of the 8 hardware-facing controls) and expands
 the preset system to 128 slots (full PC range) with per-preset renaming — see
 "Control-34" section below.
 User-tested in Max (2026-07-12): MIDI Control Input confirmed working first try. Preset
-numbering and SAVE/RECALL are both confirmed correct. Renaming went through SIX rounds of
-a from-scratch coll/uzi/sprintf/zl.join system, each round fixing one bug and (twice)
-regressing or exposing another — see the "Control-34" section below for the blow-by-blow.
-That whole system has now been DELETED and replaced: the user supplied a working
-reference patch of their own that renames a pattrstorage-backed menu, and tracing it
-revealed pattrstorage has a NATIVE slot-naming protocol (`getslotnamelist` /
-`slotname <n> <name>` / `slotname done`) that this session didn't know about. The rename
-system is rebuilt on that native protocol instead of a custom coll — see "Rebuilt from
-scratch on pattrstorage's own native slot-naming protocol" below for the full design.
-NOT yet tested in Max at all in this form (seventh attempt at renaming, first attempt at
-the pattrstorage-native design).
+numbering and SAVE/RECALL are both confirmed correct. Renaming/display has been through
+MANY rounds this session: a from-scratch coll/uzi/sprintf/zl.join system (six rounds,
+each fixing one bug, twice regressing or exposing another); a full rewrite onto
+pattrstorage's own native slot-naming protocol after the user supplied a working
+reference patch of theirs (`getslotnamelist`/`slotname <n> <name>`/`slotname done`) --
+this fixed renaming but exposed a genuine architecture conflict (the menu got
+permanently stuck at however many slots had been saved, since it could only ever show
+what pattrstorage already knew about); and now a further rewrite, per the user's explicit
+choice, to a two-phase CAPTURE (write pattrstorage's replies into a coll) then REBUILD
+(unconditionally show all 128 slots every time, falling back to a default for any
+never-used slot) design -- see "User chose (b): always show all 128 slots" below for the
+current, NOT YET TESTED design. This is the eighth round on this specific feature.
 NOT YET tested: with real SP-404 MK2 hardware attached (per-bus MIDI channel dispatch,
 PC 0-7 recall to the actual unit — now PC 0-127).
 
@@ -538,6 +539,54 @@ Neither has been implemented yet -- asked the user which they'd prefer before pr
 since (b) is a substantial rebuild of the rebuild routine yet again and (a) is a smaller,
 more surgical addition but changes the SAVE workflow (a separate slot-number field
 instead of picking from the dropdown).
+
+### User chose (b): always show all 128 slots -- rebuilt on a two-phase capture/rebuild design
+Asked the user directly rather than guess; they chose to keep the always-128 display
+(closer to this patch's ORIGINAL, pre-pattrstorage-native design) over adding a separate
+slot-number field for SAVE.
+
+New design -- CAPTURE then REBUILD, keeping pattrstorage's native slotname protocol as
+the source of truth for names but no longer letting it dictate which slots are visible:
+- **CAPTURE**: pattrstorage's "slotname <n> <name>" replies (from a `getslotnamelist`
+  request) are written into `obj-c34-namecache` (a plain `coll`, @embed 1, pre-seeded
+  with 128 default entries `['Preset', 'N']`) as they arrive -- this phase never touches
+  the visible menu at all. `obj-c34-slotname-unpack` (`unpack 0 s`) splits each reply into
+  the int slot number and the (possibly multi-atom) name; `obj-c34-cache-zljoin`
+  (`zl.join`) builds `[n, name...]` for the coll's write syntax, ordered by unpack's own
+  right-to-left firing (name into the cold inlet first, n into the hot inlet second,
+  triggering the write).
+- **REBUILD**: triggered only once the capture stream ends (pattrstorage's bare
+  `slotname done`, meaning the cache is now fully up to date) -- `obj-c34-rebuild-t`
+  clears the menu, then `obj-c34-rebuild-uzi` (`uzi 128`, base defaults to 1 -- the same
+  base-value gotcha fixed earlier this session) unconditionally walks slots 1-128,
+  looking up each one's name in `namecache` (ALWAYS finds something, real or the seeded
+  default) and building `"append PC<n-1> - <name>"` via the same proven
+  `sprintf append PC%ld -` + `zl.join` combination already validated for this exact
+  purpose earlier in the session. This guarantees full 1-128 coverage every single time,
+  regardless of what pattrstorage has actually been told to store.
+- The old gate/clearopen mechanism (needed when live pattrstorage messages fed the menu
+  directly) is gone entirely -- capture only ever writes to a coll, never to the menu, so
+  there's no risk of a partially-open window letting stray data through.
+- `obj-c34-slot1` stays `+ 1`, now for the simplest of its three justifications this
+  session: the menu is a fixed, complete, in-order 128-item list again, so umenu index i
+  is always real pattrstorage slot i+1 -- exactly the same convention SAVE/RECALL already
+  use independently.
+- Named defaults are 2-atom (`['Preset', 'N']`) again, not the single-atom form used
+  right before this rewrite -- that single-atom form was specifically why a coll lookup
+  came back wrapped as `"symbol <value>"` in an earlier round; multi-atom entries flow
+  through `zl.join` exactly like a real (possibly multi-word) pattrstorage name would, so
+  that quirk should not resurface, though it hasn't been re-confirmed by Max testing yet.
+`validate_control34.py` rewritten for the new object graph; the old
+`obj-c34-slotname-notzero`/`-minus1`/`-sprintf`/`-zljoin` (capture-time PC computation)
+and `obj-c34-refresh-t`/`-clearopen`/`-gate`/`-gateclose` are asserted gone.
+RETEST: from scratch -- (i) load shows all 128 items, "PC0 - Preset 1" through
+"PC127 - Preset 128" for anything never touched by pattrstorage; (ii) SAVE to any slot,
+confirm that slot's entry updates (even if just showing its default name -- pattrstorage
+now knows it exists); (iii) RECALL still works; (iv) rename several DIFFERENT slots in a
+row (including a multi-word name) and confirm each lands on the slot actually selected,
+with the textbox clearing and the label updating correctly every time; (v) no stuck
+count -- SAVE to slot 128 specifically and confirm it still shows correctly (the far end
+of the range, not exercised by earlier rounds which only reached PC10).
 
 ## 33: SYNC-expr ternary fix + DFX slots into presets
 Generated by `sp404gen/build_control33.py` (from Control-32); structurally validated by

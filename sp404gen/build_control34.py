@@ -211,21 +211,41 @@ for i, (name, cc, target_id, kind) in enumerate(MIDI_TARGETS):
 # =====================================================================
 # 2. 128 PRESETS + rename
 #
-# Rebuilt from scratch after three failed from-scratch attempts (missing
-# "append" selector; a `prepend` that didn't adopt a multi-atom dynamic
-# prefix; uzi's base-value argument; a coll whose single-atom values got
-# wrapped as "symbol <value>" on lookup; textedit's unconditional "text"
-# selector). The user supplied a WORKING reference patch of their own
-# (MIDI_CC_scene_morph.maxpat) that renames a menu backed by pattrstorage --
-# tracing it revealed pattrstorage has a NATIVE slot-naming protocol:
+# Rebuilt from scratch multiple times this session. The user's own working
+# reference patch (MIDI_CC_scene_morph.maxpat) revealed pattrstorage has a
+# NATIVE slot-naming protocol:
 #   - "getslotnamelist" sent to pattrstorage makes it emit, via its own
 #     outlet, one "slotname <preset#> <name>" message per slot it knows
 #     about, followed by a bare "slotname done".
 #   - "slotname <preset#> <name>" sent TO pattrstorage renames that slot.
-# This is pattrstorage's own feature (not specific to the classic grid
-# `preset` UI object) -- using it here replaces the entire custom coll +
-# uzi-loop + sprintf/zl.join rebuild machinery with pattrstorage's own
-# bookkeeping, which is what the reference patch does.
+# An earlier version of this build used that protocol as the SOLE source
+# of what to display: clear + append only the slots pattrstorage reported.
+# That broke down in real Max testing: getslotnamelist only ever reports
+# "0 to the largest stored slot" (confirmed via Max's own pattrstorage
+# docs), and since the same umenu was used both to pick a SAVE target and
+# to display known slots, there was no way to ever select a slot
+# pattrstorage didn't already have data for -- the menu got permanently
+# stuck at however many slots had been used so far (observed: stuck at
+# PC10). The user chose, when asked, to go back to always showing all 128
+# slots rather than adding a separate slot-number field for SAVE.
+#
+# Current design: a two-phase CAPTURE-then-REBUILD, keeping pattrstorage's
+# native protocol as the source of truth for names but no longer letting
+# it dictate which slots are visible:
+#   - CAPTURE: pattrstorage's "slotname <n> <name>" replies are written
+#     into obj-c34-namecache (a coll, NOT the menu) as they arrive -- purely
+#     a lookup table, no menu interaction at all during this phase.
+#   - REBUILD: triggered only once pattrstorage's stream ends ("slotname
+#     done", meaning the cache is now fully up to date), a uzi-128 loop
+#     (same proven pattern debugged earlier this session: uzi's base-value
+#     argument, a single-specifier sprintf for "append PC<n> -", zl.join to
+#     concatenate that with the cached name since names can be more than
+#     one atom) unconditionally builds all 128 items, looking up each
+#     slot's name in the cache (falling back to the coll's pre-seeded
+#     "Preset N" default for any slot pattrstorage has never reported).
+# This guarantees full 1-128 coverage regardless of what's actually been
+# saved, while still sourcing real names from pattrstorage's own bookkeeping
+# rather than a separate custom store.
 # =====================================================================
 N_PRESETS = 128
 
@@ -237,7 +257,24 @@ slotmenu['items'] = []
 for n in range(1, N_PRESETS + 1):
     if n > 1:
         slotmenu['items'].append(',')
-    slotmenu['items'] += ['Preset', str(n)]  # placeholder only -- replaced at load by getslotnamelist
+    slotmenu['items'] += ['Preset', str(n)]  # placeholder only -- replaced at load by the rebuild
+
+# namecache holds pattrstorage's reported names, keyed 1-128 to match real
+# slot numbers directly (slot N -> PC(N-1)). Pre-seeded with a default
+# label for every slot so a lookup ALWAYS finds something, even for slots
+# pattrstorage has never reported (coll returns nothing on a missing key,
+# which would otherwise silently break the rebuild for any never-used slot).
+add_box({'id': 'obj-c34-namecache', 'maxclass': 'newobj',
+         'text': 'coll obj-c34-namecache @embed 1',
+         'numinlets': 1, 'numoutlets': 4,
+         'outlettype': ['', '', '', ''],
+         'saved_object_attributes': {'embed': 1, 'precision': 6},
+         'patching_rect': [5100.0, 4500.0, 180.0, 22.0],
+         'coll_data': {
+             'count': N_PRESETS,
+             'data': [{'key': n, 'value': ['Preset', str(n)]}
+                      for n in range(1, N_PRESETS + 1)],
+         }})
 
 # shadow holds the last real user selection (cold-tapped, silent) so the
 # visible highlight can be restored after "clear" wipes it during a rebuild
@@ -287,17 +324,15 @@ add_line('obj-c34-nameedit', 0, 'obj-c34-route-text', 0)
 # current slot, tracked continuously (no bang-fetch needed -- fires on
 # every real selection change, which always happens well before the user
 # finishes typing a name, so pack's cold inlet is already correct by the
-# time Return commits the text). Offset by +1 again -- but for a DIFFERENT
-# reason than the original (wrong) +1 this replaced: pattrstorage's own
-# "slotname" numbering IS 0-based and DOES match obj-pv2-slotmenu's index
-# directly in general, but obj-c34-slotname-notzero filters pattrstorage's
-# slot 0 out of the rebuilt menu entirely (see below), so the umenu's OWN
-# item positions no longer line up 1:1 with real pattrstorage slot numbers
-# once that filter is in play -- every visible item is shifted down by
-# exactly the one slot that was omitted. Confirmed by Max testing: without
-# this offset, renaming targeted the slot immediately BEFORE the one
-# actually selected (the reverse of the original +1 bug, which existed
-# before slot 0 was filtered out of the list at all).
+# time Return commits the text). +1 because the menu now ALWAYS shows a
+# fixed, complete 128-item list in order (item i is always PC(i), i.e.
+# real pattrstorage slot i+1) -- matching the same "+1" convention already
+# used, independently, for SAVE/RECALL's own "store N"/"recall N" slot
+# numbers. (This +1 has been through two other, each-correct-at-the-time
+# justifications earlier this session as the surrounding design changed;
+# this is the current, simplest one: umenu index and real slot number are
+# now always exactly 1 apart, with no filtering or dynamic-list-length
+# behavior left to compensate for.)
 add_box({'id': 'obj-c34-slot1', 'maxclass': 'newobj', 'text': '+ 1',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
          'patching_rect': [5100.0, 4680.0, 40.0, 22.0]})
@@ -329,17 +364,26 @@ add_box({'id': 'obj-c34-name-t', 'maxclass': 'newobj', 'text': 't b l b',
          'patching_rect': [5100.0, 4770.0, 50.0, 22.0]})
 add_line('obj-c34-namemsg', 0, 'obj-c34-name-t', 0)
 add_line('obj-c34-name-t', 1, 'obj-pv2-pattrstorage', 0)   # SECOND: rename command
-add_line('obj-c34-name-t', 0, 'obj-c34-refresh-t', 0)      # THIRD/LAST: refresh (defined below)
+add_line('obj-c34-name-t', 0, 'obj-c34-getslotnamelist', 0)  # THIRD/LAST: refresh (defined below)
 add_box({'id': 'obj-c34-nameedit-clear', 'maxclass': 'message', 'text': 'clear',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5170.0, 4770.0, 50.0, 20.0]})
 add_line('obj-c34-name-t', 2, 'obj-c34-nameedit-clear', 0)  # FIRST: clear the box
 add_line('obj-c34-nameedit-clear', 0, 'obj-c34-nameedit', 0)
 
-# --- refresh routine (shared by loadbang, rename, and SAVE) ---
+# --- trigger a refresh (shared by loadbang, rename, and SAVE) ---
+# refresh now means just one thing: ask pattrstorage for its current
+# slot-name list. No clearing/gating happens here anymore -- CAPTURE (into
+# namecache) and REBUILD (of the visible menu) are both driven later, off
+# pattrstorage's reply stream itself, not off this trigger directly.
 add_box({'id': 'obj-c34-lb2', 'maxclass': 'newobj', 'text': 'loadbang',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': ['bang'],
          'patching_rect': [5100.0, 4800.0, 60.0, 22.0]})
+add_box({'id': 'obj-c34-getslotnamelist', 'maxclass': 'message', 'text': 'getslotnamelist',
+         'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [5170.0, 4800.0, 110.0, 20.0]})
+add_line('obj-c34-lb2', 0, 'obj-c34-getslotnamelist', 0)
+add_line('obj-c34-getslotnamelist', 0, 'obj-pv2-pattrstorage', 0)
 
 # SAVE should also refresh the menu -- the reference patch's classic grid
 # `preset` UI object does this automatically as part of its own store
@@ -360,30 +404,9 @@ for l in lines:
         pl['source'][1] += 1
         remapped_save += 1
 assert remapped_save == 2, f'expected 2 obj-pv2-save-t outlet lines to remap, got {remapped_save}'
-add_line('obj-pv2-save-t', 0, 'obj-c34-refresh-t', 0)  # LAST: refresh after the store lands
-# t b b (right-to-left): out1 (FIRST) clears the menu and opens the gate;
-# out0 (SECOND) asks pattrstorage for the current slot-name list
-add_box({'id': 'obj-c34-refresh-t', 'maxclass': 'newobj', 'text': 't b b',
-         'numinlets': 1, 'numoutlets': 2, 'outlettype': ['bang', 'bang'],
-         'patching_rect': [5100.0, 4830.0, 50.0, 22.0]})
-add_line('obj-c34-lb2', 0, 'obj-c34-refresh-t', 0)
-add_box({'id': 'obj-c34-clearopen', 'maxclass': 'newobj', 'text': 't 1 clear',
-         'numinlets': 1, 'numoutlets': 2, 'outlettype': ['int', 'clear'],
-         'patching_rect': [5100.0, 4860.0, 60.0, 22.0]})
-add_line('obj-c34-refresh-t', 1, 'obj-c34-clearopen', 0)
-add_line('obj-c34-clearopen', 1, 'obj-pv2-slotmenu', 0)    # FIRST: "clear" -> wipe the menu
-add_box({'id': 'obj-c34-gate', 'maxclass': 'newobj', 'text': 'gate 1',
-         'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5100.0, 4890.0, 40.0, 22.0]})
-add_line('obj-c34-clearopen', 0, 'obj-c34-gate', 0)        # SECOND: "1" -> open the gate
-add_line('obj-c34-gate', 0, 'obj-pv2-slotmenu', 0)
-add_box({'id': 'obj-c34-getslotnamelist', 'maxclass': 'message', 'text': 'getslotnamelist',
-         'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5170.0, 4860.0, 110.0, 20.0]})
-add_line('obj-c34-refresh-t', 0, 'obj-c34-getslotnamelist', 0)
-add_line('obj-c34-getslotnamelist', 0, 'obj-pv2-pattrstorage', 0)
+add_line('obj-pv2-save-t', 0, 'obj-c34-getslotnamelist', 0)  # LAST: refresh after the store lands
 
-# --- parse pattrstorage's reply stream ---
+# --- CAPTURE: write pattrstorage's replies into namecache (no menu contact) ---
 add_box({'id': 'obj-c34-slotname-route', 'maxclass': 'newobj', 'text': 'route slotname',
          'numinlets': 2, 'numoutlets': 2, 'outlettype': ['', ''],
          'patching_rect': [5170.0, 4920.0, 90.0, 22.0]})
@@ -392,48 +415,75 @@ add_box({'id': 'obj-c34-slotname-done', 'maxclass': 'newobj', 'text': 'route don
          'numinlets': 2, 'numoutlets': 2, 'outlettype': ['', ''],
          'patching_rect': [5170.0, 4950.0, 90.0, 22.0]})
 add_line('obj-c34-slotname-route', 0, 'obj-c34-slotname-done', 0)
-add_box({'id': 'obj-c34-gateclose', 'maxclass': 'newobj', 'text': 't 0',
-         'numinlets': 1, 'numoutlets': 1, 'outlettype': ['int'],
-         'patching_rect': [5170.0, 4980.0, 30.0, 22.0]})
-add_line('obj-c34-slotname-done', 0, 'obj-c34-gateclose', 0)  # matched "done" (bare bang)
-add_line('obj-c34-gateclose', 0, 'obj-c34-gate', 0)           # closes the gate
-add_line('obj-c34-slotname-done', 0, 'obj-c34-slotshadow', 0)  # ALSO restore the visible selection
-
 add_box({'id': 'obj-c34-slotname-unpack', 'maxclass': 'newobj', 'text': 'unpack 0 s',
          'numinlets': 1, 'numoutlets': 2, 'outlettype': ['int', ''],
-         'patching_rect': [5250.0, 4980.0, 70.0, 22.0]})
+         'patching_rect': [5170.0, 4980.0, 70.0, 22.0]})
 add_line('obj-c34-slotname-done', 1, 'obj-c34-slotname-unpack', 0)  # unmatched: "<n> <name>"
-# pattrstorage always reports a permanent slot 0 ("(undefined)") ahead of
-# any user-created slots -- confirmed by Max testing (it showed up as
-# "PC-1 - (undefined)", always present, never one of the intended 128).
-# select 0 filters it out: its reject outlet (1, non-zero slots) passes
-# through to the PC-prefix/append path unchanged; its match outlet (0,
-# slot==0) is left unwired, so slot 0 is silently skipped and never
-# appended to the visible menu.
-add_box({'id': 'obj-c34-slotname-notzero', 'maxclass': 'newobj', 'text': 'select 0',
-         'numinlets': 1, 'numoutlets': 2, 'outlettype': ['bang', 'int'],
-         'patching_rect': [5250.0, 5000.0, 60.0, 22.0]})
-add_line('obj-c34-slotname-unpack', 0, 'obj-c34-slotname-notzero', 0)  # SECOND (int, leftmost)
-add_box({'id': 'obj-c34-slotname-minus1', 'maxclass': 'newobj', 'text': '- 1',
+# zl.join builds [n, name-atoms...] for the coll write (coll's write syntax
+# is "key, content..." -- exactly a list starting with the int key). Left/
+# hot segment is the bare int n (zl.join treats a single atom as a 1-atom
+# list); right/cold segment is the (possibly multi-atom) name. Ordering
+# matches unpack's own right-to-left firing: name (outlet 1) arrives at
+# the cold inlet FIRST, n (outlet 0) arrives at the hot inlet SECOND and
+# triggers the join.
+add_box({'id': 'obj-c34-cache-zljoin', 'maxclass': 'newobj', 'text': 'zl.join',
+         'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [5170.0, 5010.0, 60.0, 22.0]})
+add_line('obj-c34-slotname-unpack', 1, 'obj-c34-cache-zljoin', 1)  # FIRST (symbol, rightmost): name
+add_line('obj-c34-slotname-unpack', 0, 'obj-c34-cache-zljoin', 0)  # SECOND (int, leftmost): n, triggers
+add_line('obj-c34-cache-zljoin', 0, 'obj-c34-namecache', 0)        # write [n, name...] into the cache
+
+# --- REBUILD: once capture is done ("slotname done"), unconditionally
+#     rebuild all 128 menu items from namecache ---
+add_box({'id': 'obj-c34-rebuild-t', 'maxclass': 'newobj', 'text': 't b b',
+         'numinlets': 1, 'numoutlets': 2, 'outlettype': ['bang', 'bang'],
+         'patching_rect': [5170.0, 5040.0, 50.0, 22.0]})
+add_line('obj-c34-slotname-done', 0, 'obj-c34-rebuild-t', 0)  # matched "done" (bare bang)
+add_box({'id': 'obj-c34-clear-msg', 'maxclass': 'message', 'text': 'clear',
+         'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [5170.0, 5070.0, 50.0, 20.0]})
+add_line('obj-c34-rebuild-t', 1, 'obj-c34-clear-msg', 0)  # FIRST: clear
+add_line('obj-c34-clear-msg', 0, 'obj-pv2-slotmenu', 0)
+# uzi's args are <repetitions> <base>, not <repetitions> <outlet-index> --
+# omitting the base defaults it to 1, giving a counter of 1..128 that
+# matches namecache's own 1-128 keys directly (confirmed against Max's own
+# uzi reference during an earlier round of this same rebuild pattern).
+add_box({'id': 'obj-c34-rebuild-uzi', 'maxclass': 'newobj', 'text': 'uzi 128',
+         'numinlets': 2, 'numoutlets': 3, 'outlettype': ['bang', 'bang', 'int'],
+         'patching_rect': [5170.0, 5100.0, 70.0, 22.0]})
+add_line('obj-c34-rebuild-t', 0, 'obj-c34-rebuild-uzi', 0)  # SECOND: start the loop
+add_box({'id': 'obj-c34-rebuild-split', 'maxclass': 'newobj', 'text': 't i i',
+         'numinlets': 1, 'numoutlets': 2, 'outlettype': ['int', 'int'],
+         'patching_rect': [5170.0, 5130.0, 50.0, 22.0]})
+add_line('obj-c34-rebuild-uzi', 2, 'obj-c34-rebuild-split', 0)  # counter 1..128
+add_line('obj-c34-rebuild-split', 1, 'obj-c34-namecache', 0)    # FIRST: lookup cached name
+add_box({'id': 'obj-c34-rebuild-minus1', 'maxclass': 'newobj', 'text': '- 1',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
-         'patching_rect': [5250.0, 5015.0, 40.0, 22.0]})
-add_line('obj-c34-slotname-notzero', 1, 'obj-c34-slotname-minus1', 0)  # reject (non-zero) passthrough
+         'patching_rect': [5170.0, 5160.0, 40.0, 22.0]})
+add_line('obj-c34-rebuild-split', 0, 'obj-c34-rebuild-minus1', 0)  # SECOND: pc# path
 # single-specifier sprintf builds "append PC<n> -" (proven pattern, same as
 # the existing `sprintf send Bus%d_X` objects). zl.join then concatenates
-# that with the (possibly multi-atom) name from unpack -- NOT %s (exactly
-# one atom) and NOT a dynamically re-armed `prepend` (confirmed broken for
-# a multi-atom prefix in real Max testing).
-add_box({'id': 'obj-c34-slotname-sprintf', 'maxclass': 'newobj',
+# that with the (possibly multi-atom) cached name -- NOT %s (exactly one
+# atom) and NOT a dynamically re-armed `prepend` (both confirmed broken for
+# multi-atom content in real Max testing earlier this session).
+add_box({'id': 'obj-c34-rebuild-sprintf', 'maxclass': 'newobj',
          'text': 'sprintf append PC%ld -',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5250.0, 5040.0, 100.0, 22.0]})
-add_line('obj-c34-slotname-minus1', 0, 'obj-c34-slotname-sprintf', 0)
-add_box({'id': 'obj-c34-slotname-zljoin', 'maxclass': 'newobj', 'text': 'zl.join',
+         'patching_rect': [5170.0, 5190.0, 100.0, 22.0]})
+add_line('obj-c34-rebuild-minus1', 0, 'obj-c34-rebuild-sprintf', 0)
+add_box({'id': 'obj-c34-rebuild-zljoin', 'maxclass': 'newobj', 'text': 'zl.join',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5250.0, 5070.0, 60.0, 22.0]})
-add_line('obj-c34-slotname-unpack', 1, 'obj-c34-slotname-zljoin', 1)   # FIRST (symbol, rightmost): 2nd segment
-add_line('obj-c34-slotname-sprintf', 0, 'obj-c34-slotname-zljoin', 0)  # SECOND: 1st segment, triggers join
-add_line('obj-c34-slotname-zljoin', 0, 'obj-c34-gate', 1)              # data -> gate (passes if open)
+         'patching_rect': [5170.0, 5220.0, 60.0, 22.0]})
+add_line('obj-c34-namecache', 0, 'obj-c34-rebuild-zljoin', 1)      # cold: 2nd segment = cached name
+add_line('obj-c34-rebuild-sprintf', 0, 'obj-c34-rebuild-zljoin', 0)  # hot: 1st segment, triggers join
+add_line('obj-c34-rebuild-zljoin', 0, 'obj-pv2-slotmenu', 0)
+
+# restore the visible selection after the rebuild (clear wipes it) --
+# triggered by uzi's OWN completion bang (outlet 1), guaranteeing all 128
+# appends have finished first, not by pattrstorage's "slotname done"
+# directly (that only means capture is done, not that the rebuild it just
+# kicked off has finished).
+add_line('obj-c34-rebuild-uzi', 1, 'obj-c34-slotshadow', 0)
 
 # =====================================================================
 with open(DST, 'w') as f:
