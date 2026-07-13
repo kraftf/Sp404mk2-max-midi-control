@@ -330,13 +330,17 @@ if (('obj-pv2-pattrstorage', 0), ('obj-c34-slotname-route', 0)) not in conn:
 required_capture_chain = [
     (('obj-c34-slotname-route', 0), ('obj-c34-slotname-done', 0)),
     (('obj-c34-slotname-done', 1), ('obj-c34-slotname-unpack', 0)),
-    (('obj-c34-slotname-unpack', 1), ('obj-c34-cache-zljoin', 1)),
+    (('obj-c34-slotname-unpack', 1), ('obj-c34-capture-routesym', 0)),
+    (('obj-c34-capture-routesym', 0), ('obj-c34-cache-zljoin', 1)),
+    (('obj-c34-capture-routesym', 1), ('obj-c34-cache-zljoin', 1)),
     (('obj-c34-slotname-unpack', 0), ('obj-c34-cache-zljoin', 0)),
     (('obj-c34-cache-zljoin', 0), ('obj-c34-namecache', 0)),
 ]
 for src, dst in required_capture_chain:
     if (src, dst) not in conn:
         errors.append(f'missing capture wire: {src} -> {dst}')
+if box_by_id.get('obj-c34-capture-routesym', {}).get('text') != 'route symbol':
+    errors.append('obj-c34-capture-routesym should be "route symbol"')
 
 # REBUILD: pattrstorage's "slotname done" (capture finished) -> clear ->
 # uzi 128 -> per-slot lookup in namecache + PC-prefix sprintf + zl.join ->
@@ -351,7 +355,9 @@ required_rebuild_chain = [
     (('obj-c34-rebuild-split', 1), ('obj-c34-namecache', 0)),
     (('obj-c34-rebuild-split', 0), ('obj-c34-rebuild-minus1', 0)),
     (('obj-c34-rebuild-minus1', 0), ('obj-c34-rebuild-sprintf', 0)),
-    (('obj-c34-namecache', 0), ('obj-c34-rebuild-zljoin', 1)),
+    (('obj-c34-namecache', 0), ('obj-c34-rebuild-routesym', 0)),
+    (('obj-c34-rebuild-routesym', 0), ('obj-c34-rebuild-zljoin', 1)),
+    (('obj-c34-rebuild-routesym', 1), ('obj-c34-rebuild-zljoin', 1)),
     (('obj-c34-rebuild-sprintf', 0), ('obj-c34-rebuild-zljoin', 0)),
     (('obj-c34-rebuild-zljoin', 0), ('obj-pv2-slotmenu', 0)),
     (('obj-c34-rebuild-uzi', 1), ('obj-c34-slotshadow', 0)),
@@ -361,6 +367,8 @@ for src, dst in required_rebuild_chain:
         errors.append(f'missing rebuild wire: {src} -> {dst}')
 if box_by_id.get('obj-c34-rebuild-uzi', {}).get('text') != 'uzi 128':
     errors.append('obj-c34-rebuild-uzi should be "uzi 128" (base defaults to 1)')
+if box_by_id.get('obj-c34-rebuild-routesym', {}).get('text') != 'route symbol':
+    errors.append('obj-c34-rebuild-routesym should be "route symbol"')
 if box_by_id.get('obj-c34-rebuild-sprintf', {}).get('text') != 'sprintf append PC%ld -':
     errors.append('obj-c34-rebuild-sprintf should be "sprintf append PC%ld -"')
 

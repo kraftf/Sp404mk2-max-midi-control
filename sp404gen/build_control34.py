@@ -419,17 +419,30 @@ add_box({'id': 'obj-c34-slotname-unpack', 'maxclass': 'newobj', 'text': 'unpack 
          'numinlets': 1, 'numoutlets': 2, 'outlettype': ['int', ''],
          'patching_rect': [5170.0, 4980.0, 70.0, 22.0]})
 add_line('obj-c34-slotname-done', 1, 'obj-c34-slotname-unpack', 0)  # unmatched: "<n> <name>"
+# A single-word name comes back from unpack as one atom, and coll (like
+# textedit) wraps a single-atom lookup/report as "symbol <value>" rather
+# than the bare value -- confirmed in real Max testing (a single-word
+# rename displayed as e.g. "PC4 - symbol MyKit"). route symbol strips that
+# selector if present; its reject outlet passes anything else (multi-atom
+# names, or names that already lack the prefix) through unchanged, so both
+# outlets are safely wired to the SAME destination -- exactly one of them
+# fires per message.
+add_box({'id': 'obj-c34-capture-routesym', 'maxclass': 'newobj', 'text': 'route symbol',
+         'numinlets': 2, 'numoutlets': 2, 'outlettype': ['', ''],
+         'patching_rect': [5170.0, 5000.0, 90.0, 22.0]})
+add_line('obj-c34-slotname-unpack', 1, 'obj-c34-capture-routesym', 0)  # FIRST (symbol, rightmost): name
 # zl.join builds [n, name-atoms...] for the coll write (coll's write syntax
 # is "key, content..." -- exactly a list starting with the int key). Left/
 # hot segment is the bare int n (zl.join treats a single atom as a 1-atom
-# list); right/cold segment is the (possibly multi-atom) name. Ordering
-# matches unpack's own right-to-left firing: name (outlet 1) arrives at
-# the cold inlet FIRST, n (outlet 0) arrives at the hot inlet SECOND and
-# triggers the join.
+# list); right/cold segment is the (possibly multi-atom, "symbol"-stripped)
+# name. Ordering matches unpack's own right-to-left firing: name arrives
+# at the cold inlet FIRST, n arrives at the hot inlet SECOND and triggers
+# the join.
 add_box({'id': 'obj-c34-cache-zljoin', 'maxclass': 'newobj', 'text': 'zl.join',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5170.0, 5010.0, 60.0, 22.0]})
-add_line('obj-c34-slotname-unpack', 1, 'obj-c34-cache-zljoin', 1)  # FIRST (symbol, rightmost): name
+         'patching_rect': [5170.0, 5030.0, 60.0, 22.0]})
+add_line('obj-c34-capture-routesym', 0, 'obj-c34-cache-zljoin', 1)  # matched: stripped name
+add_line('obj-c34-capture-routesym', 1, 'obj-c34-cache-zljoin', 1)  # reject: unchanged name
 add_line('obj-c34-slotname-unpack', 0, 'obj-c34-cache-zljoin', 0)  # SECOND (int, leftmost): n, triggers
 add_line('obj-c34-cache-zljoin', 0, 'obj-c34-namecache', 0)        # write [n, name...] into the cache
 
@@ -471,10 +484,19 @@ add_box({'id': 'obj-c34-rebuild-sprintf', 'maxclass': 'newobj',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5170.0, 5190.0, 100.0, 22.0]})
 add_line('obj-c34-rebuild-minus1', 0, 'obj-c34-rebuild-sprintf', 0)
+# same "symbol <value>" wrapping risk on the way OUT of the coll as on the
+# way in -- strip it here too rather than assume it only ever happens at
+# capture time (the exact point coll applies this wrapping wasn't pinned
+# down precisely; stripping at both ends is cheap and safe either way).
+add_box({'id': 'obj-c34-rebuild-routesym', 'maxclass': 'newobj', 'text': 'route symbol',
+         'numinlets': 2, 'numoutlets': 2, 'outlettype': ['', ''],
+         'patching_rect': [5170.0, 5220.0, 90.0, 22.0]})
+add_line('obj-c34-namecache', 0, 'obj-c34-rebuild-routesym', 0)
 add_box({'id': 'obj-c34-rebuild-zljoin', 'maxclass': 'newobj', 'text': 'zl.join',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5170.0, 5220.0, 60.0, 22.0]})
-add_line('obj-c34-namecache', 0, 'obj-c34-rebuild-zljoin', 1)      # cold: 2nd segment = cached name
+         'patching_rect': [5170.0, 5250.0, 60.0, 22.0]})
+add_line('obj-c34-rebuild-routesym', 0, 'obj-c34-rebuild-zljoin', 1)  # matched: stripped name
+add_line('obj-c34-rebuild-routesym', 1, 'obj-c34-rebuild-zljoin', 1)  # reject: unchanged name
 add_line('obj-c34-rebuild-sprintf', 0, 'obj-c34-rebuild-zljoin', 0)  # hot: 1st segment, triggers join
 add_line('obj-c34-rebuild-zljoin', 0, 'obj-pv2-slotmenu', 0)
 

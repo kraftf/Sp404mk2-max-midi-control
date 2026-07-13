@@ -79374,6 +79374,25 @@
    },
    {
     "box": {
+     "id": "obj-c34-capture-routesym",
+     "maxclass": "newobj",
+     "text": "route symbol",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "outlettype": [
+      "",
+      ""
+     ],
+     "patching_rect": [
+      5170.0,
+      5000.0,
+      90.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
      "id": "obj-c34-cache-zljoin",
      "maxclass": "newobj",
      "text": "zl.join",
@@ -79384,7 +79403,7 @@
      ],
      "patching_rect": [
       5170.0,
-      5010.0,
+      5030.0,
       60.0,
       22.0
      ]
@@ -79504,6 +79523,25 @@
    },
    {
     "box": {
+     "id": "obj-c34-rebuild-routesym",
+     "maxclass": "newobj",
+     "text": "route symbol",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "outlettype": [
+      "",
+      ""
+     ],
+     "patching_rect": [
+      5170.0,
+      5220.0,
+      90.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
      "id": "obj-c34-rebuild-zljoin",
      "maxclass": "newobj",
      "text": "zl.join",
@@ -79514,7 +79552,7 @@
      ],
      "patching_rect": [
       5170.0,
-      5220.0,
+      5250.0,
       60.0,
       22.0
      ]
@@ -94509,6 +94547,30 @@
       1
      ],
      "destination": [
+      "obj-c34-capture-routesym",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-capture-routesym",
+      0
+     ],
+     "destination": [
+      "obj-c34-cache-zljoin",
+      1
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-capture-routesym",
+      1
+     ],
+     "destination": [
       "obj-c34-cache-zljoin",
       1
      ]
@@ -94639,6 +94701,30 @@
      "source": [
       "obj-c34-namecache",
       0
+     ],
+     "destination": [
+      "obj-c34-rebuild-routesym",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-rebuild-routesym",
+      0
+     ],
+     "destination": [
+      "obj-c34-rebuild-zljoin",
+      1
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c34-rebuild-routesym",
+      1
      ],
      "destination": [
       "obj-c34-rebuild-zljoin",
