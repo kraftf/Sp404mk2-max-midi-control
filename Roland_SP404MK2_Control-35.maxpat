@@ -80601,11 +80601,10 @@
     "box": {
      "id": "obj-c35-save-t",
      "maxclass": "newobj",
-     "text": "t b b b b b b b b b b",
+     "text": "t b b b b b b b b b",
      "numinlets": 1,
-     "numoutlets": 10,
+     "numoutlets": 9,
      "outlettype": [
-      "bang",
       "bang",
       "bang",
       "bang",
@@ -80619,7 +80618,7 @@
      "patching_rect": [
       5100.0,
       5820.0,
-      160.0,
+      140.0,
       22.0
      ]
     }
@@ -80656,24 +80655,6 @@
       5100.0,
       5880.0,
       40.0,
-      22.0
-     ]
-    }
-   },
-   {
-    "box": {
-     "id": "obj-c35-indevname-value",
-     "maxclass": "newobj",
-     "text": "value c35_indevname_shadow",
-     "numinlets": 1,
-     "numoutlets": 1,
-     "outlettype": [
-      ""
-     ],
-     "patching_rect": [
-      5300.0,
-      5850.0,
-      180.0,
       22.0
      ]
     }
@@ -96616,30 +96597,6 @@
      "source": [
       "obj-c34-indev",
       1
-     ],
-     "destination": [
-      "obj-c35-indevname-value",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c35-save-t",
-      9
-     ],
-     "destination": [
-      "obj-c35-indevname-value",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c35-indevname-value",
-      0
      ],
      "destination": [
       "obj-c35-savedev-zljoin",
