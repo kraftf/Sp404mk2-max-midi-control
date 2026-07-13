@@ -260,8 +260,14 @@ add_box({'id': 'obj-c34-name-cmt', 'maxclass': 'comment',
 # present in that same reference patch) since outputmode does not remove
 # textedit's unconditional "text" selector -- confirmed both by Max forum
 # threads and by testing this exact patch.
+# numoutlets/outlettype copied EXACTLY from that reference patch's obj-224 --
+# textedit always has 4 outlets (only outlet 0 is used, same as there); an
+# earlier build here wrongly declared numoutlets=1, a genuine box-definition
+# mismatch for this maxclass that plausibly broke the whole patch's load
+# (matches the reported "menu shows nothing, SAVE does nothing" symptom,
+# which has nothing to do with the rename feature specifically).
 add_box({'id': 'obj-c34-nameedit', 'maxclass': 'textedit',
-         'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
+         'numinlets': 1, 'numoutlets': 4, 'outlettype': ['', 'int', '', ''],
          'outputmode': 1,
          'patching_rect': [5100.0, 4620.0, 200.0, 22.0],
          'presentation': 1, 'presentation_rect': [750.0, 140.0, 240.0, 22.0]})
@@ -308,10 +314,31 @@ add_line('obj-c34-namemsg', 0, 'obj-c34-name-t', 0)
 add_line('obj-c34-name-t', 1, 'obj-pv2-pattrstorage', 0)   # FIRST: rename command
 add_line('obj-c34-name-t', 0, 'obj-c34-refresh-t', 0)      # SECOND: refresh (defined below)
 
-# --- refresh routine (shared by loadbang and rename) ---
+# --- refresh routine (shared by loadbang, rename, and SAVE) ---
 add_box({'id': 'obj-c34-lb2', 'maxclass': 'newobj', 'text': 'loadbang',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': ['bang'],
          'patching_rect': [5100.0, 4800.0, 60.0, 22.0]})
+
+# SAVE should also refresh the menu -- the reference patch's classic grid
+# `preset` UI object does this automatically as part of its own store
+# behavior, which this patch has no equivalent of (it uses a plain umenu +
+# explicit "store N" instead). Extend obj-pv2-save-t (t b b -> t b b b, the
+# same technique already used in Control-33 for obj-pv2-rcl-post-t): the
+# new LEFTMOST outlet fires LAST, guaranteeing the "store" message has
+# already reached pattrstorage before the refresh is requested.
+save_t = box_by_id['obj-pv2-save-t']
+assert save_t['text'] == 't b b', f'obj-pv2-save-t: unexpected text {save_t["text"]!r}'
+save_t['text'] = 't b b b'
+save_t['numoutlets'] = 3
+save_t['outlettype'] = ['', '', '']
+remapped_save = 0
+for l in lines:
+    pl = l['patchline']
+    if pl['source'][0] == 'obj-pv2-save-t':
+        pl['source'][1] += 1
+        remapped_save += 1
+assert remapped_save == 2, f'expected 2 obj-pv2-save-t outlet lines to remap, got {remapped_save}'
+add_line('obj-pv2-save-t', 0, 'obj-c34-refresh-t', 0)  # LAST: refresh after the store lands
 # t b b (right-to-left): out1 (FIRST) clears the menu and opens the gate;
 # out0 (SECOND) asks pattrstorage for the current slot-name list
 add_box({'id': 'obj-c34-refresh-t', 'maxclass': 'newobj', 'text': 't b b',

@@ -75205,10 +75205,11 @@
     "box": {
      "id": "obj-pv2-save-t",
      "maxclass": "newobj",
-     "text": "t b b",
+     "text": "t b b b",
      "numinlets": 1,
-     "numoutlets": 2,
+     "numoutlets": 3,
      "outlettype": [
+      "",
       "",
       ""
      ],
@@ -78182,8 +78183,11 @@
      "id": "obj-c34-nameedit",
      "maxclass": "textedit",
      "numinlets": 1,
-     "numoutlets": 1,
+     "numoutlets": 4,
      "outlettype": [
+      "",
+      "int",
+      "",
       ""
      ],
      "outputmode": 1,
@@ -90417,7 +90421,7 @@
     "patchline": {
      "source": [
       "obj-pv2-save-t",
-      1
+      2
      ],
      "destination": [
       "obj-pv2-slotmenu",
@@ -90429,7 +90433,7 @@
     "patchline": {
      "source": [
       "obj-pv2-save-t",
-      0
+      1
      ],
      "destination": [
       "obj-pv2-store-msg",
@@ -93429,6 +93433,18 @@
     "patchline": {
      "source": [
       "obj-c34-name-t",
+      0
+     ],
+     "destination": [
+      "obj-c34-refresh-t",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-pv2-save-t",
       0
      ],
      "destination": [

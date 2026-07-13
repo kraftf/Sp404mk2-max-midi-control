@@ -226,6 +226,15 @@ for dead in ('obj-c34-namecoll', 'obj-c34-slotshadow-restore', 'obj-c34-namet',
 # and by the reference patch, which also uses route text despite outputmode 1)
 if box_by_id.get('obj-c34-nameedit', {}).get('outputmode') != 1:
     errors.append('obj-c34-nameedit: expected outputmode=1')
+# textedit ALWAYS has 4 outlets (confirmed against the reference patch's own
+# obj-224) -- an earlier build here wrongly declared numoutlets=1, a genuine
+# box-definition mismatch for this maxclass, found after the user reported
+# the whole preset system (including previously-working SAVE) went dead
+nameedit_box = box_by_id.get('obj-c34-nameedit', {})
+if nameedit_box.get('numoutlets') != 4 or nameedit_box.get('outlettype') != ['', 'int', '', '']:
+    errors.append(f'obj-c34-nameedit: expected numoutlets=4, outlettype=["","int","",""], '
+                  f'got numoutlets={nameedit_box.get("numoutlets")}, '
+                  f'outlettype={nameedit_box.get("outlettype")}')
 msg_box = box_by_id.get('obj-c34-nameedit-keymode')
 if msg_box is None or msg_box['text'] != 'keymode 1':
     errors.append(f'obj-c34-nameedit-keymode: expected "keymode 1", got '
@@ -260,9 +269,19 @@ for src, dst in required_rename_chain:
         errors.append(f'missing rename wire: {src} -> {dst}')
 
 # refresh: t b b -> (FIRST) clear + open gate, (SECOND) ask pattrstorage for
-# its slot-name list; shared by loadbang and the post-rename trigger above
+# its slot-name list; shared by loadbang, the post-rename trigger above, and
+# SAVE (obj-pv2-save-t extended t b b -> t b b b, same technique already
+# used in Control-33 for obj-pv2-rcl-post-t -- the reference patch's classic
+# grid `preset` object refreshes its menu automatically on store; this patch
+# has no equivalent of that object, so SAVE must trigger it explicitly)
+if box_by_id['obj-pv2-save-t']['text'] != 't b b b':
+    errors.append(f'obj-pv2-save-t: expected "t b b b", got '
+                  f'{box_by_id["obj-pv2-save-t"]["text"]!r}')
 required_refresh_chain = [
     (('obj-c34-lb2', 0), ('obj-c34-refresh-t', 0)),
+    (('obj-pv2-save-t', 0), ('obj-c34-refresh-t', 0)),
+    (('obj-pv2-save-t', 1), ('obj-pv2-store-msg', 0)),
+    (('obj-pv2-save-t', 2), ('obj-pv2-slotmenu', 0)),
     (('obj-c34-refresh-t', 1), ('obj-c34-clearopen', 0)),
     (('obj-c34-clearopen', 1), ('obj-pv2-slotmenu', 0)),
     (('obj-c34-clearopen', 0), ('obj-c34-gate', 0)),
