@@ -316,6 +316,43 @@ select-by-name wire from RECALL.
 RETEST: third attempt at this specific mechanism — same test as above (SAVE with device A
 selected, switch to device B, RECALL, confirm it switches back to device A).
 
+### Third attempt STILL wrong — missed coll's known "symbol"-wrapping bug
+User: "Still not working!!! Cant believe it!" — fair; this is the third round on this one
+mechanism.
+
+**Root cause: forgot to apply an already-known, already-fixed-once bug class to the new
+coll.** `coll` wraps a single-atom stored value as `symbol <value>` when reported back on
+lookup — this exact behavior was discovered and fixed earlier this session for the
+128-preset name cache (`obj-c34-rebuild-routesym`/`obj-c34-capture-routesym`). It was
+never applied to `obj-c35-ccdevice`. Re-confirmed (by re-reading this patch's own obj-4
+device list) that umenu's outlet 1 sends the ENTIRE selected item's text as ONE atom,
+regardless of how many words it visually contains ("Arturia BeatStep Pro Arturia
+BeatStepPro" is one JSON string / one atom, not four) — so EVERY entry in
+obj-c35-ccdevice is single-atom and hits this wrapping unconditionally, not just the
+visually-one-word device names. Without stripping it, RECALL's lookup returned `symbol
+<name>`, and `prepend symbol` then sent `symbol symbol <name>` (double-wrapped) into
+obj-c34-indev — which matches no real menu item, so RECALL silently did nothing.
+Fixed: inserted `obj-c35-rcl-dev-routesym` (`route symbol`) between the ccdevice lookup
+and `prepend symbol`, both outlets (matched + reject) wired to the same destination —
+identical idiom to the original namecache fix. Not applied on the SAVE/write side: the
+device name there comes straight from umenu's own output, never through a coll first, so
+there is nothing to strip before writing (this was reasoned through carefully rather than
+applied defensively/blindly on both ends, unlike the original 128-system which genuinely
+needed it on both ends because its incoming data came from pattrstorage's own reply,
+which likely has its own internal coll-based wrapping already baked in before it ever
+reached this codebase).
+Before committing to this fix, also re-verified (rather than re-assumed) two other facts
+this specific bug's diagnosis depended on: `zl.join`'s cold inlet persists its stored
+segment across multiple triggers until overwritten or explicitly `clear`ed (confirmed via
+Cycling '74's own zl reference) — ruling out a "cold data consumed after one use" theory;
+and `route symbol`'s matching semantics (matches on the message's first atom, outputs the
+remainder) — unchanged from its already-proven use elsewhere in this codebase.
+RETEST: fourth attempt at this specific mechanism. Given how many rounds this one feature
+has taken, it may be worth the user checking the Max console directly for ANY error text
+during SAVE/RECALL of the device (not just "does it work") if this still isn't right, since
+that diagnostic proved decisive for the very first bug in this feature (the RECALL/int
+crash) and might surface something faster than another guess-fix cycle.
+
 ⚠ Separately and more urgently: the user reports the edit-mode/presentation-mode
 performance problem (previously "sluggish... 40GB+ memory") has gotten WORSE — "the
 moment I go into edit mode I barely can go back to presentation" — to the point that it

@@ -205,9 +205,20 @@ for i, name in enumerate(CC_TARGETS):
     check((ccsel_id, 0) in outgoing('obj-c35-rcl-unpack', i),
           f'rcl-unpack outlet {i} should dispatch to {ccsel_id}')
 
-# --- RECALL also re-selects the saved MIDI Control Input Device by name ---
-check(outgoing('obj-c35-ccdevice', 0) == [('obj-c35-rcl-dev-prepend', 0)],
-      'ccdevice lookup output should feed rcl-dev-prepend')
+# --- RECALL also re-selects the saved MIDI Control Input Device by name.
+#     `route symbol` strips coll's single-atom "symbol <value>" wrapping
+#     (the same bug already fixed for the 128-preset name cache) -- every
+#     entry here hits it unconditionally since umenu's outlet 1 sends the
+#     whole selected text as ONE atom regardless of word count. Without
+#     this, RECALL sends "symbol symbol <name>" (double-wrapped) and
+#     matches nothing. ---
+check(outgoing('obj-c35-ccdevice', 0) == [('obj-c35-rcl-dev-routesym', 0)],
+      'ccdevice lookup output should feed rcl-dev-routesym (symbol-wrapping strip)')
+routesym = box_by_id['obj-c35-rcl-dev-routesym']
+check(routesym['text'] == 'route symbol', 'obj-c35-rcl-dev-routesym wrong text')
+check(sorted(outgoing('obj-c35-rcl-dev-routesym', 0) + outgoing('obj-c35-rcl-dev-routesym', 1)) ==
+      sorted([('obj-c35-rcl-dev-prepend', 0), ('obj-c35-rcl-dev-prepend', 0)]),
+      'rcl-dev-routesym both outlets (matched + reject) should feed rcl-dev-prepend')
 check(box_by_id['obj-c35-rcl-dev-prepend']['text'] == 'prepend symbol',
       'obj-c35-rcl-dev-prepend wrong text')
 check(outgoing('obj-c35-rcl-dev-prepend', 0) == [('obj-c34-indev', 0)],

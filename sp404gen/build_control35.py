@@ -82,14 +82,23 @@ Builds Roland_SP404MK2_Control-35.maxpat from Control-34. Three requests:
    connected device is a harmless no-op, which is the correct fallback here.
    Third embedded coll: obj-c35-ccdevice, defaulting every slot to a sentinel
    ('(unset)') that isn't expected to match any real device name.
-   Went through two wrong designs before landing on the simple one -- see
-   SESSION_STATE.md for both: first, bare-banging obj-c34-indev directly
-   (umenu doesn't respond to bang at all); then an unnecessary `value`
-   proxy object with its own bang-to-fetch step. Final version: obj-c34-
-   indev's outlet 1 already broadcasts the selected text continuously on
-   every real change, so it's wired straight into obj-c35-savedev-zljoin's
-   cold inlet with no intermediate object at all -- it's simply already
-   sitting there, current, whenever SAVE's hot trigger fires.
+   Went through three wrong designs before this one -- see SESSION_STATE.md
+   for all of them: bare-banging obj-c34-indev directly (umenu doesn't
+   respond to bang at all); an unnecessary `value` proxy object with its
+   own bang-to-fetch step (obj-c34-indev's outlet 1 already broadcasts the
+   selected text continuously on every real change, so it's wired straight
+   into obj-c35-savedev-zljoin's cold inlet with no intermediate object at
+   all); and, still not enough -- missed that `coll` wraps a single-atom
+   stored value as "symbol <value>" when reported back on lookup (the exact
+   bug already fixed for the 128-preset name cache), which every entry in
+   obj-c35-ccdevice hits unconditionally since umenu's outlet 1 sends the
+   whole selected text as ONE atom regardless of word count. `route symbol`
+   (obj-c35-rcl-dev-routesym) now strips that on the RECALL side, right
+   after the coll lookup and before `prepend symbol` -- without it, RECALL
+   was sending "symbol symbol <name>" (double-wrapped) into obj-c34-indev,
+   which matches nothing. Not needed on the SAVE/write side: the device
+   name there comes straight from umenu's own output, never through a coll
+   first, so there's no wrapping to strip before it's written.
 
 6. Program Change Input Device selector (added in this same build, item 1)
    repositioned in presentation to sit next to the bus-state preset
@@ -375,11 +384,31 @@ for i, name in enumerate(CC_TARGETS):
 # device if ports were added/removed/reordered since the save) -- fans out
 # from the same slot value already computed above, an independent read
 # with no ordering dependency on the ccvalues lookup.
+#
+# MISSED THE FIRST TWO TIMES: `coll` wraps a single-atom stored value as
+# "symbol <value>" when reported back (the exact bug already fixed for the
+# 128-preset name cache -- obj-c34-rebuild-routesym). umenu's outlet 1
+# sends the selected item's full text as ONE atom regardless of how many
+# words it visually contains (confirmed by re-reading this patch's own
+# obj-4 items list: each device name is one JSON string, one atom), so
+# EVERY entry in obj-c35-ccdevice is single-atom and unconditionally hits
+# this wrapping on lookup. Without stripping it, RECALL was sending
+# "prepend symbol" onto an ALREADY-wrapped "symbol <name>", i.e. literally
+# "symbol symbol <name>" into obj-c34-indev -- which matches no real menu
+# item, so RECALL silently did nothing. `route symbol` strips it if
+# present; its reject outlet passes anything else through unchanged (same
+# both-outlets-to-one-destination idiom used for namecache), so this is
+# safe regardless of atom count.
 add_line('obj-c35-rcl-slotplus1', 0, 'obj-c35-ccdevice', 0)  # lookup -> outlet0: device name
+add_box({'id': 'obj-c35-rcl-dev-routesym', 'maxclass': 'newobj', 'text': 'route symbol',
+         'numinlets': 2, 'numoutlets': 2, 'outlettype': ['', ''],
+         'patching_rect': [5300.0, 5980.0, 90.0, 22.0]})
+add_line('obj-c35-ccdevice', 0, 'obj-c35-rcl-dev-routesym', 0)
 add_box({'id': 'obj-c35-rcl-dev-prepend', 'maxclass': 'newobj', 'text': 'prepend symbol',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5300.0, 5980.0, 100.0, 22.0]})
-add_line('obj-c35-ccdevice', 0, 'obj-c35-rcl-dev-prepend', 0)
+         'patching_rect': [5400.0, 6010.0, 100.0, 22.0]})
+add_line('obj-c35-rcl-dev-routesym', 0, 'obj-c35-rcl-dev-prepend', 0)  # matched: stripped name
+add_line('obj-c35-rcl-dev-routesym', 1, 'obj-c35-rcl-dev-prepend', 0)  # reject: unchanged (already bare)
 add_line('obj-c35-rcl-dev-prepend', 0, 'obj-c34-indev', 0)  # select by name (fires real output too)
 
 # --- RENAME: write into ccnames directly (synchronous, no external

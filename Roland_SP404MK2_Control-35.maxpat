@@ -80740,6 +80740,25 @@
    },
    {
     "box": {
+     "id": "obj-c35-rcl-dev-routesym",
+     "maxclass": "newobj",
+     "text": "route symbol",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "outlettype": [
+      "",
+      ""
+     ],
+     "patching_rect": [
+      5300.0,
+      5980.0,
+      90.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
      "id": "obj-c35-rcl-dev-prepend",
      "maxclass": "newobj",
      "text": "prepend symbol",
@@ -80749,8 +80768,8 @@
       ""
      ],
      "patching_rect": [
-      5300.0,
-      5980.0,
+      5400.0,
+      6010.0,
       100.0,
       22.0
      ]
@@ -96801,6 +96820,30 @@
      "source": [
       "obj-c35-ccdevice",
       0
+     ],
+     "destination": [
+      "obj-c35-rcl-dev-routesym",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c35-rcl-dev-routesym",
+      0
+     ],
+     "destination": [
+      "obj-c35-rcl-dev-prepend",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c35-rcl-dev-routesym",
+      1
      ],
      "destination": [
       "obj-c35-rcl-dev-prepend",
