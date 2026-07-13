@@ -26,11 +26,14 @@ stripping `coll`'s "symbol <value>" wrapping from single-word renames. See "Rete
 but single-word renames show a literal 'symbol' prefix" below (and the sections above it)
 for the full blow-by-blow if this needs revisiting.
 
-Roland_SP404MK2_Control-35.maxpat (825 boxes, 1323 lines) builds on Control-34: adds a
+Roland_SP404MK2_Control-35.maxpat (827 boxes, 1326 lines) builds on Control-34: adds a
 dedicated Program Change input port and a second (coll-based, not pattrstorage-based)
 preset system for the 8 MIDI CC selectors, and investigates a user-reported performance
-problem. See "Control-35" section below.
-NOT YET tested: Control-35 has not been opened in Max at all yet (see "35" MAX-TEST
+problem. See "Control-35" section below. First real-Max test found two bugs (RECALL
+crashing with a console error; rename silently failing for multi-word names) — both
+fixed same session, see "First Max test found two real bugs" under "35" below; NOT yet
+retested.
+NOT YET tested: the fixes above have not been retested in Max yet (see "35" MAX-TEST
 ITEMS below). Real SP-404 MK2 hardware also remains untested throughout (per-bus MIDI
 channel dispatch, PC 0-127 recall to the actual unit).
 
@@ -144,11 +147,54 @@ a) Dedicated PC input port: does sending `port N` to a bare `pgmin`'s left inlet
    specifically.
 b) CC-mapping preset system: SAVE, RECALL, and rename all need a full real-Max retest,
    same as the 128-preset system needed — this is a fresh implementation (colls, not
-   pattrstorage) and, despite the outlet/inlet ordering bug already caught and fixed
-   during self-review, has no track record of working end-to-end in actual Max yet.
+   pattrstorage) and, despite two real bugs already caught and fixed (see below), has no
+   track record of working end-to-end in actual Max yet.
 c) Performance: no way to verify whether anything in this build measurably helps (or even
-   whether it makes things marginally worse by adding ~35 more boxes) without the user
+   whether it makes things marginally worse by adding ~37 more boxes) without the user
    testing directly.
+
+### First Max test found two real bugs — both fixed same session
+User's first real-Max test of Control-35 reported: (1) RECALL prints console error
+`int: doesn't understand "RECALL"` and does nothing; (2) the rename box doesn't work at
+all.
+
+**Bug 1 — RECALL wired straight into an `int` object.** `obj-c35-ccrclbtn` (a message
+box, text "RECALL") was wired directly into `obj-c35-ccshadow-rcl` (`int 0`) inlet 0. `t`
+(trigger) objects fire their configured outlet types regardless of what triggered them,
+which is why SAVE's identical-shaped click (message box "SAVE" -> `obj-c35-save-t`, a `t`
+object) worked fine — but `int` is not a trigger; it only understands bang/int/float, and
+a bare symbol like "RECALL" lands as exactly the reported console error. Fixed: inserted
+`obj-c35-rcl-t` (`t b`) between the RECALL button and the shadow int, so RECALL now goes
+through a trigger first, exactly mirroring SAVE's already-correct path.
+
+**Bug 2 — rename used `pack s i`, which silently clobbers the slot number for any
+multi-word name.** Confirmed via Cycling '74's own `pack` documentation: when a
+multi-atom list arrives at one inlet, "the first item is stored in the location that
+corresponds to the inlet in which it was received, and each subsequent item is stored as
+if it had arrived in subsequent inlets" — and a symbol landing in a number-typed inlet is
+converted to 0. `obj-c35-ccnamepack` (`pack s i`, hot=typed name, cold=slot#) would take a
+2+-word name like "My Kit", store "My" in its own inlet, and spill "Kit" into the NEXT
+inlet — the int-typed slot number — zeroing it. The rename would then silently land on
+coll key 0 (outside the displayed 1-16 range, invisible) while the intended slot's name
+never changed, exactly matching "the rename box doesn't work". This is the identical
+class of multi-atom-truncation problem `zl.join` was already introduced to solve
+elsewhere in this codebase (the Control-34 name cache) — replaced `pack s i` +
+a `"$2 $1"` reordering message with `zl.join` (hot inlet = freshly-fetched slot number,
+fires last and becomes the first segment of the output; cold inlet = the name, stored
+first) so the coll write is always exactly `[slot, name...]` regardless of word count.
+This also removed the now-unnecessary `obj-c35-ccnamemsg` message box and the
+continuously-tracked `obj-c35-ccslot1` (replaced by a dedicated bang-fetched shadow,
+`obj-c35-ccshadow-rename`, matching the SAVE/RECALL shadow idiom already used elsewhere
+in this same feature).
+⚠ **Open concern raised to the user, not yet acted on:** Control-34's own rename
+mechanism (`obj-c34-namepack`, also `pack s i`) has the exact same shape and is likely
+subject to the identical multi-word-clobbering bug, despite having been reported
+"confirmed working" for multi-word names earlier this session. Not touched without the
+user's explicit go-ahead, given how many rounds it took to get that system stable — see
+the conversation for the question asked and the user's answer once given.
+RETEST: both fixes need a full real-Max retest (RECALL with an actual click; rename with
+both single-word AND multi-word names specifically, since that's the exact case that was
+broken).
 
 ## 34: MIDI Control Input + 128 presets with renaming
 Generated by `sp404gen/build_control34.py` (from Control-33); structurally validated by

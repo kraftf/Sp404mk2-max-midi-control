@@ -218,14 +218,7 @@ def add_shadow(shadow_id):
 add_shadow('obj-c35-ccshadow-save')
 add_shadow('obj-c35-ccshadow-rcl')
 add_shadow('obj-c35-ccshadow-restore')
-
-# continuous hot tracker for rename (fires on every real selection change,
-# always current by the time a rename is committed) -- same idiom as
-# obj-c34-slot1
-add_box({'id': 'obj-c35-ccslot1', 'maxclass': 'newobj', 'text': '+ 1',
-         'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
-         'patching_rect': [5100.0, 5760.0, 40.0, 22.0]})
-add_line('obj-c35-ccmenu', 0, 'obj-c35-ccslot1', 0)
+add_shadow('obj-c35-ccshadow-rename')
 
 add_box({'id': 'obj-c35-restore-pset', 'maxclass': 'newobj', 'text': 'prepend set',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
@@ -270,10 +263,20 @@ add_line('obj-c35-save-slotplus1', 0, 'obj-c35-savepack', 0)      # HOT: trigger
 add_line('obj-c35-savepack', 0, 'obj-c35-ccvalues', 0)             # write [slot v1..v8]
 
 # --- RECALL: fetch slot, look up values, dispatch to the 8 ccsel boxes ---
+# obj-c35-ccrclbtn outputs the literal symbol "RECALL", which int objects do
+# NOT understand (confirmed by the user's own Max console: `int: doesn't
+# understand "RECALL"`) -- unlike `t`, which fires its outlets regardless of
+# input type, `int` only accepts bang/int/float. SAVE was already routed
+# through `t` first (obj-c35-save-t) so it never hit this; RECALL was wired
+# directly into the shadow int and needs the same `t b` in front of it.
+add_box({'id': 'obj-c35-rcl-t', 'maxclass': 'newobj', 'text': 't b',
+         'numinlets': 1, 'numoutlets': 1, 'outlettype': ['bang'],
+         'patching_rect': [5100.0, 5930.0, 40.0, 22.0]})
 add_box({'id': 'obj-c35-rcl-slotplus1', 'maxclass': 'newobj', 'text': '+ 1',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
          'patching_rect': [5100.0, 5950.0, 40.0, 22.0]})
-add_line('obj-c35-ccrclbtn', 0, 'obj-c35-ccshadow-rcl', 0)
+add_line('obj-c35-ccrclbtn', 0, 'obj-c35-rcl-t', 0)
+add_line('obj-c35-rcl-t', 0, 'obj-c35-ccshadow-rcl', 0)
 add_line('obj-c35-ccshadow-rcl', 0, 'obj-c35-rcl-slotplus1', 0)
 add_line('obj-c35-rcl-slotplus1', 0, 'obj-c35-ccvalues', 0)  # lookup -> outlet0: [v1..v8]
 add_box({'id': 'obj-c35-rcl-unpack', 'maxclass': 'newobj',
@@ -287,28 +290,61 @@ for i, name in enumerate(CC_TARGETS):
     add_line('obj-c35-rcl-unpack', i, f'obj-c34-ccsel-{name}', 0)
 
 # --- RENAME: write into ccnames directly (synchronous, no external
-#     protocol), then rebuild the menu immediately -- t b l b, same shape
-#     as obj-c34-name-t: outlet2 (FIRST) clears the textbox, outlet1
-#     (SECOND) writes the name, outlet0 (THIRD/LAST) rebuilds the menu ---
-add_box({'id': 'obj-c35-ccnamepack', 'maxclass': 'newobj', 'text': 'pack s i',
+#     protocol), then rebuild the menu immediately.
+#
+# NOT `pack s i` (what Control-34's obj-c34-namepack uses): confirmed via
+# Cycling '74's own pack documentation that when a multi-atom LIST arrives
+# at one inlet, "the first item is stored in the location that corresponds
+# to the inlet in which it was received, and each subsequent item is stored
+# as if it had arrived in subsequent inlets". For a 2+-word name typed into
+# ccnameedit (e.g. "My Kit"), the second word ("Kit") would spill over into
+# pack's NEXT inlet -- here, the int-typed slot-number inlet -- silently
+# CLOBBERING the slot number (converted to 0, since a symbol landing in an
+# int-typed inlet becomes 0) with no error printed. That's the confirmed
+# "int: doesn't understand" class of bug in a different, silent form: not a
+# console error, just a rename landing on coll key 0 (invisible -- outside
+# the displayed 1-16 range) while the intended slot's name never changes.
+# Used `zl.join` instead (the same fix already proven for the 128-preset
+# name cache in Control-34, for the identical reason): its hot inlet
+# contributes the FIRST segment of the output list, cold inlet the SECOND,
+# with no per-inlet atom-count limit either side.
+#
+# obj-c35-ccname-t (t b l b, right-to-left): outlet2 (FIRST) clears the
+# textbox; outlet1 (SECOND, passthrough) stores the just-typed name into
+# zljoin's COLD inlet; outlet0 (THIRD/LAST) bangs a dedicated shadow to
+# fetch the CURRENT slot fresh, feeding zljoin's HOT inlet -- guaranteeing
+# the name is already cold-stored before the slot triggers the join, so
+# the output is always exactly [slot, name...].
+add_box({'id': 'obj-c35-ccname-zljoin', 'maxclass': 'newobj', 'text': 'zl.join',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5100.0, 6010.0, 60.0, 22.0]})
-add_line('obj-c35-ccroute-text', 0, 'obj-c35-ccnamepack', 0)  # hot: typed text
-add_line('obj-c35-ccslot1', 0, 'obj-c35-ccnamepack', 1)       # cold: current slot#
-add_box({'id': 'obj-c35-ccnamemsg', 'maxclass': 'message', 'text': '$2 $1',
-         'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5100.0, 6040.0, 60.0, 20.0]})
-add_line('obj-c35-ccnamepack', 0, 'obj-c35-ccnamemsg', 0)
+add_box({'id': 'obj-c35-ccslot1-rename', 'maxclass': 'newobj', 'text': '+ 1',
+         'numinlets': 2, 'numoutlets': 1, 'outlettype': ['int'],
+         'patching_rect': [5170.0, 6010.0, 40.0, 22.0]})
 add_box({'id': 'obj-c35-ccname-t', 'maxclass': 'newobj', 'text': 't b l b',
          'numinlets': 1, 'numoutlets': 3, 'outlettype': ['bang', '', 'bang'],
-         'patching_rect': [5100.0, 6070.0, 50.0, 22.0]})
-add_line('obj-c35-ccnamemsg', 0, 'obj-c35-ccname-t', 0)
-add_line('obj-c35-ccname-t', 1, 'obj-c35-ccnames', 0)  # SECOND: write [slot name...]
+         'patching_rect': [5100.0, 5980.0, 50.0, 22.0]})
+add_line('obj-c35-ccroute-text', 0, 'obj-c35-ccname-t', 0)
+add_line('obj-c35-ccname-t', 1, 'obj-c35-ccname-zljoin', 1)          # SECOND: name (cold)
+add_line('obj-c35-ccname-t', 0, 'obj-c35-ccshadow-rename', 0)        # THIRD/LAST: fetch slot
+add_line('obj-c35-ccshadow-rename', 0, 'obj-c35-ccslot1-rename', 0)
+add_line('obj-c35-ccslot1-rename', 0, 'obj-c35-ccname-zljoin', 0)    # HOT: triggers join
 add_box({'id': 'obj-c35-ccnameedit-clear', 'maxclass': 'message', 'text': 'clear',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
-         'patching_rect': [5170.0, 6070.0, 50.0, 20.0]})
+         'patching_rect': [5170.0, 5980.0, 50.0, 20.0]})
 add_line('obj-c35-ccname-t', 2, 'obj-c35-ccnameedit-clear', 0)  # FIRST: clear box
 add_line('obj-c35-ccnameedit-clear', 0, 'obj-c35-ccnameedit', 0)
+
+# write the join's output (always [slot, name...]) into ccnames, THEN
+# (only after that write lands) trigger a rebuild -- explicit `t` rather
+# than relying on zl.join's own fan-out order between two destinations,
+# per this codebase's own established rule that multi-destination fan-out
+# order is unreliable and must be sequenced with a trigger object instead.
+add_box({'id': 'obj-c35-ccname-write-t', 'maxclass': 'newobj', 'text': 't b l',
+         'numinlets': 1, 'numoutlets': 2, 'outlettype': ['bang', ''],
+         'patching_rect': [5100.0, 6040.0, 50.0, 22.0]})
+add_line('obj-c35-ccname-zljoin', 0, 'obj-c35-ccname-write-t', 0)
+add_line('obj-c35-ccname-write-t', 1, 'obj-c35-ccnames', 0)  # FIRST: write [slot name...]
 
 # --- REBUILD (shared by loadbang and rename): clear + uzi16 + append,
 #     reading names straight from obj-c35-ccnames -- no capture phase
@@ -316,7 +352,7 @@ add_line('obj-c35-ccnameedit-clear', 0, 'obj-c35-ccnameedit', 0)
 add_box({'id': 'obj-c35-rebuild-t', 'maxclass': 'newobj', 'text': 't b b',
          'numinlets': 1, 'numoutlets': 2, 'outlettype': ['bang', 'bang'],
          'patching_rect': [5100.0, 6100.0, 50.0, 22.0]})
-add_line('obj-c35-ccname-t', 0, 'obj-c35-rebuild-t', 0)  # THIRD/LAST after rename
+add_line('obj-c35-ccname-write-t', 0, 'obj-c35-rebuild-t', 0)  # LAST: after the write lands
 add_box({'id': 'obj-c35-cc-lb', 'maxclass': 'newobj', 'text': 'loadbang',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': ['bang'],
          'patching_rect': [5250.0, 6100.0, 60.0, 22.0]})

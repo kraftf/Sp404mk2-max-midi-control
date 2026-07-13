@@ -158,8 +158,13 @@ check(outgoing('obj-c35-savepack', 0) == [('obj-c35-ccvalues', 0)],
 #     coll stores exactly [v_ctrl1..v_onoff] in CC_TARGETS order (pack's
 #     inlet order), so unpack's outlet order must match it atom-for-atom
 #     or values silently swap between controls on recall. ---
-check(outgoing('obj-c35-ccrclbtn', 0) == [('obj-c35-ccshadow-rcl', 0)],
-      'RECALL button not wired to ccshadow-rcl')
+check(box_by_id['obj-c35-rcl-t']['text'] == 't b', 'obj-c35-rcl-t wrong text')
+check(outgoing('obj-c35-ccrclbtn', 0) == [('obj-c35-rcl-t', 0)],
+      'RECALL button not wired through rcl-t (a bare "RECALL" symbol into an '
+      'int object is exactly the confirmed console error -- must go through a '
+      'trigger first, same as SAVE does via save-t)')
+check(outgoing('obj-c35-rcl-t', 0) == [('obj-c35-ccshadow-rcl', 0)],
+      'rcl-t not wired to ccshadow-rcl')
 check(outgoing('obj-c35-ccshadow-rcl', 0) == [('obj-c35-rcl-slotplus1', 0)],
       'ccshadow-rcl not wired to rcl-slotplus1')
 check(outgoing('obj-c35-rcl-slotplus1', 0) == [('obj-c35-ccvalues', 0)],
@@ -174,24 +179,41 @@ for i, name in enumerate(CC_TARGETS):
           f'rcl-unpack outlet {i} should dispatch to {ccsel_id}')
 
 # --- rename write + rebuild chain ---
-check(outgoing('obj-c35-ccroute-text', 0) == [('obj-c35-ccnamepack', 0)],
-      'ccroute-text not feeding ccnamepack hot inlet')
-check(outgoing('obj-c35-ccslot1', 0) == [('obj-c35-ccnamepack', 1)],
-      'ccslot1 not feeding ccnamepack cold inlet')
-check(box_by_id['obj-c35-ccnamemsg']['text'] == '$2 $1', 'obj-c35-ccnamemsg text wrong')
+# NOT `pack s i` (see build_control35.py's long comment on this): Cycling
+# '74's own pack documentation confirms a multi-atom list arriving at one
+# inlet spills its extra atoms into SUBSEQUENT inlets, which would silently
+# clobber the int-typed slot-number inlet (converted to 0) for any 2+-word
+# rename. Uses zl.join instead -- same fix already proven for the 128-preset
+# name cache in Control-34.
 name_t = box_by_id['obj-c35-ccname-t']
 check(name_t['text'] == 't b l b', 'obj-c35-ccname-t wrong text')
+check(outgoing('obj-c35-ccroute-text', 0) == [('obj-c35-ccname-t', 0)],
+      'ccroute-text should feed ccname-t')
 check(outgoing('obj-c35-ccname-t', 2) == [('obj-c35-ccnameedit-clear', 0)],
       'ccname-t outlet2 (first) should clear the textbox')
-check(outgoing('obj-c35-ccname-t', 1) == [('obj-c35-ccnames', 0)],
-      'ccname-t outlet1 (second) should write into obj-c35-ccnames')
-check(outgoing('obj-c35-ccname-t', 0) == [('obj-c35-rebuild-t', 0)],
-      'ccname-t outlet0 (last) should trigger rebuild')
+check(outgoing('obj-c35-ccname-t', 1) == [('obj-c35-ccname-zljoin', 1)],
+      'ccname-t outlet1 (second) should store the name into zljoin COLD inlet')
+check(outgoing('obj-c35-ccname-t', 0) == [('obj-c35-ccshadow-rename', 0)],
+      'ccname-t outlet0 (last) should fetch the rename shadow')
+check(outgoing('obj-c35-ccshadow-rename', 0) == [('obj-c35-ccslot1-rename', 0)],
+      'ccshadow-rename not wired to ccslot1-rename')
+check(outgoing('obj-c35-ccslot1-rename', 0) == [('obj-c35-ccname-zljoin', 0)],
+      'ccslot1-rename should feed zljoin HOT inlet (triggers join last, after name is cold-stored)')
+check(outgoing('obj-c35-ccname-zljoin', 0) == [('obj-c35-ccname-write-t', 0)],
+      'ccname-zljoin output should feed ccname-write-t')
+write_t = box_by_id['obj-c35-ccname-write-t']
+check(write_t['text'] == 't b l', 'obj-c35-ccname-write-t wrong text')
+check(outgoing('obj-c35-ccname-write-t', 1) == [('obj-c35-ccnames', 0)],
+      'ccname-write-t outlet1 (first) should write [slot name...] into obj-c35-ccnames')
+check(outgoing('obj-c35-ccname-write-t', 0) == [('obj-c35-rebuild-t', 0)],
+      'ccname-write-t outlet0 (last) should trigger rebuild, after the write lands')
+check(incoming('obj-c35-ccshadow-rename', 1) == [('obj-c35-ccmenu', 0)],
+      'ccshadow-rename not cold-tapped from ccmenu')
 
 rebuild_t = box_by_id['obj-c35-rebuild-t']
 check(rebuild_t['text'] == 't b b', 'obj-c35-rebuild-t wrong text')
-check(sorted(incoming('obj-c35-rebuild-t', 0)) == sorted([('obj-c35-ccname-t', 0), ('obj-c35-cc-lb', 0)]),
-      'obj-c35-rebuild-t should be fed by both rename (ccname-t) and load (cc-lb)')
+check(sorted(incoming('obj-c35-rebuild-t', 0)) == sorted([('obj-c35-ccname-write-t', 0), ('obj-c35-cc-lb', 0)]),
+      'obj-c35-rebuild-t should be fed by both rename (ccname-write-t) and load (cc-lb)')
 check(outgoing('obj-c35-rebuild-t', 1) == [('obj-c35-clear-msg', 0)],
       'rebuild-t outlet1 (first) should clear the menu')
 check(outgoing('obj-c35-clear-msg', 0) == [('obj-c35-ccmenu', 0)], 'clear-msg not wired to ccmenu')
@@ -220,7 +242,8 @@ check(outgoing('obj-c35-rebuild-uzi', 1) == [('obj-c35-ccshadow-restore', 0)],
       'rebuild-uzi completion bang should restore selection via ccshadow-restore')
 
 # --- shadows all cold-tapped from ccmenu outlet0, no cross-wiring ---
-for shadow in ['obj-c35-ccshadow-save', 'obj-c35-ccshadow-rcl', 'obj-c35-ccshadow-restore']:
+for shadow in ['obj-c35-ccshadow-save', 'obj-c35-ccshadow-rcl', 'obj-c35-ccshadow-restore',
+               'obj-c35-ccshadow-rename']:
     check(incoming(shadow, 1) == [('obj-c35-ccmenu', 0)], f'{shadow} not cold-tapped from ccmenu')
     check(box_by_id[shadow]['text'] == 'int 0', f'{shadow} wrong text')
 

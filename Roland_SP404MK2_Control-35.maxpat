@@ -80437,9 +80437,9 @@
    },
    {
     "box": {
-     "id": "obj-c35-ccslot1",
+     "id": "obj-c35-ccshadow-rename",
      "maxclass": "newobj",
-     "text": "+ 1",
+     "text": "int 0",
      "numinlets": 2,
      "numoutlets": 1,
      "outlettype": [
@@ -80447,8 +80447,8 @@
      ],
      "patching_rect": [
       5100.0,
-      5760.0,
-      40.0,
+      5730.0,
+      50.0,
       22.0
      ]
     }
@@ -80535,6 +80535,24 @@
    },
    {
     "box": {
+     "id": "obj-c35-rcl-t",
+     "maxclass": "newobj",
+     "text": "t b",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "outlettype": [
+      "bang"
+     ],
+     "patching_rect": [
+      5100.0,
+      5930.0,
+      40.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
      "id": "obj-c35-rcl-slotplus1",
      "maxclass": "newobj",
      "text": "+ 1",
@@ -80578,9 +80596,9 @@
    },
    {
     "box": {
-     "id": "obj-c35-ccnamepack",
+     "id": "obj-c35-ccname-zljoin",
      "maxclass": "newobj",
-     "text": "pack s i",
+     "text": "zl.join",
      "numinlets": 2,
      "numoutlets": 1,
      "outlettype": [
@@ -80596,19 +80614,19 @@
    },
    {
     "box": {
-     "id": "obj-c35-ccnamemsg",
-     "maxclass": "message",
-     "text": "$2 $1",
+     "id": "obj-c35-ccslot1-rename",
+     "maxclass": "newobj",
+     "text": "+ 1",
      "numinlets": 2,
      "numoutlets": 1,
      "outlettype": [
-      ""
+      "int"
      ],
      "patching_rect": [
-      5100.0,
-      6040.0,
-      60.0,
-      20.0
+      5170.0,
+      6010.0,
+      40.0,
+      22.0
      ]
     }
    },
@@ -80626,7 +80644,7 @@
      ],
      "patching_rect": [
       5100.0,
-      6070.0,
+      5980.0,
       50.0,
       22.0
      ]
@@ -80644,9 +80662,28 @@
      ],
      "patching_rect": [
       5170.0,
-      6070.0,
+      5980.0,
       50.0,
       20.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-c35-ccname-write-t",
+     "maxclass": "newobj",
+     "text": "t b l",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "outlettype": [
+      "bang",
+      ""
+     ],
+     "patching_rect": [
+      5100.0,
+      6040.0,
+      50.0,
+      22.0
      ]
     }
    },
@@ -96112,8 +96149,8 @@
       0
      ],
      "destination": [
-      "obj-c35-ccslot1",
-      0
+      "obj-c35-ccshadow-rename",
+      1
      ]
     }
    },
@@ -96400,6 +96437,18 @@
       0
      ],
      "destination": [
+      "obj-c35-rcl-t",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c35-rcl-t",
+      0
+     ],
+     "destination": [
       "obj-c35-ccshadow-rcl",
       0
      ]
@@ -96544,42 +96593,6 @@
       0
      ],
      "destination": [
-      "obj-c35-ccnamepack",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c35-ccslot1",
-      0
-     ],
-     "destination": [
-      "obj-c35-ccnamepack",
-      1
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c35-ccnamepack",
-      0
-     ],
-     "destination": [
-      "obj-c35-ccnamemsg",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-c35-ccnamemsg",
-      0
-     ],
-     "destination": [
       "obj-c35-ccname-t",
       0
      ]
@@ -96592,7 +96605,43 @@
       1
      ],
      "destination": [
-      "obj-c35-ccnames",
+      "obj-c35-ccname-zljoin",
+      1
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c35-ccname-t",
+      0
+     ],
+     "destination": [
+      "obj-c35-ccshadow-rename",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c35-ccshadow-rename",
+      0
+     ],
+     "destination": [
+      "obj-c35-ccslot1-rename",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c35-ccslot1-rename",
+      0
+     ],
+     "destination": [
+      "obj-c35-ccname-zljoin",
       0
      ]
     }
@@ -96624,7 +96673,31 @@
    {
     "patchline": {
      "source": [
-      "obj-c35-ccname-t",
+      "obj-c35-ccname-zljoin",
+      0
+     ],
+     "destination": [
+      "obj-c35-ccname-write-t",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c35-ccname-write-t",
+      1
+     ],
+     "destination": [
+      "obj-c35-ccnames",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c35-ccname-write-t",
       0
      ],
      "destination": [
