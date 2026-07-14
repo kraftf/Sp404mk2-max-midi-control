@@ -1624,3 +1624,41 @@ NOT hardware/Max tested yet. To verify: send a single Program Change from
 an external controller and confirm the correct effect AND correct
 parameter values both apply on the FIRST press, no longer needing a
 second press.
+
+## Control-40/41 (real root cause + fix for Control-39's EFX-dispatch error)
+
+Control-39 broke EFX hardware dispatch entirely, printing "int: inlet:
+bang: wrong message int" 5 times per recall (once per bus). Control-40
+added two temporary console print taps (on obj-pv39-hw-efx-bussel's
+output, and just inside bus 1's hw-shadow subpatcher on the new EFX
+trigger inlet) rather than guessing a third time blind.
+
+The user's console output was the key: the inside-subpatcher tap showed a
+FLOAT ("0.") arriving at the new EFX-trigger inlet, not the bang confirmed
+present at the source. This revealed the real, previously-wrong
+assumption from Control-36/38: a subpatcher's EXTERNAL inlet/outlet order
+is determined by the `inlet`/`outlet` objects' patching_rect X-COORDINATE,
+NOT by the declared "index" attribute. (The earlier "confirmed against a
+real Max-saved file" check only ever examined a subpatcher with a SINGLE
+inlet, so it couldn't have revealed how multiple inlets get ordered
+relative to each other -- a real gap in that verification.)
+
+Control-39's new `in-efx-trigger` inlet was placed at x=400.0, landing
+between the existing cc81 (x=350) and cc82 (x=420) inlets by X-SORT --
+silently shifting the entire external inlet mapping for everything after
+it by one slot: cc82's bg value landed on the EFX trigger inlet instead
+(explaining the "0." float), and the actual EFX-dispatch bang landed on
+the onoff inlet instead, which feeds int-onoff's COLD (int/float-only)
+inlet -- hence the "bang: wrong message int" error, once per bus.
+
+Fix (build_control41.py): move in-efx-trigger's x-coordinate past every
+other inlet in the subpatcher. Verified this restores x-order == index-
+order for every bus, and added a permanent safety-net check to
+validate_control36.py and validate_control38.py so any FUTURE inlet/outlet
+addition to these subpatchers gets caught automatically if it violates
+this same invariant, instead of only being caught by another live-Max
+test cycle.
+
+NOT hardware/Max tested yet. To verify: send a single Program Change and
+confirm (a) no console errors, (b) the correct effect applies on the
+first press.

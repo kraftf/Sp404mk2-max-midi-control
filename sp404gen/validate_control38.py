@@ -100,6 +100,18 @@ for b in BUSES:
             check(outgoing(bp_id, i) == [(CTLOUT[param], 0)],
                   f'{bp_id} outlet {i} should feed {CTLOUT[param]}')
 
+    # SAFETY NET (added after Control-41's real bug): Max determines a
+    # subpatcher's external inlet/outlet order by patching_rect X-COORDINATE,
+    # NOT by the declared "index" field -- confirmed the hard way when a new
+    # inlet's x-position silently shifted every inlet after it.
+    all_sub_boxes = [sb['box'] for sb in bp['patcher']['boxes']]
+    for kind in ('inlet', 'outlet'):
+        items = [sb for sb in all_sub_boxes if sb['maxclass'] == kind]
+        by_x = [sb['id'] for sb in sorted(items, key=lambda s: s['patching_rect'][0])]
+        by_index = [sb['id'] for sb in sorted(items, key=lambda s: s['index'])]
+        check(by_x == by_index,
+              f'{bp_id}: {kind} x-coordinate order {by_x} does not match index order {by_index}')
+
 if errors:
     print(f'FAILED: {len(errors)} check(s)')
     for e in errors:
