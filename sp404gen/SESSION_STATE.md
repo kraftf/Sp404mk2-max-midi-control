@@ -1474,3 +1474,47 @@ renaming DONE — both pending Max testing, see "34" MAX-TEST ITEMS, and see "34
    second bang fires the store/recall message. Without first bang, saves to slot 0.
 10. After pattrstorage recall, use deferlow before triggering display refresh —
     gives pattrstorage time to restore all 35 values before display reads them.
+
+## Control-36 (pilot: subpatcher-ize a repeated cluster to reduce box count)
+
+User request: "the size is very big. Try to group things that get repeated.
+maybe try bpatchers for things that have repeated functions." Given no live
+Max testing capability this session, agreed with the user (via AskUserQuestion)
+to do a narrow, low-risk PILOT first rather than a full pass.
+
+Biggest repeated cluster found: 5 buses x 8 params, duplicated 3 ways in the
+Control-32 baseline (not something added this session):
+  - obj-pv2-bg-b{bus}-{param} (40 boxes): the actual pattr clients
+    (parameter_enable=1). HIGH RISK to move into a subpatcher/bpatcher --
+    pattrstorage's @subscribemode 1 auto-discovery is the entire hard-won
+    128-preset system, and whether it still finds pattr clients nested
+    inside a subpatcher is untested. NOT touched this pass.
+  - obj-pv2-sh-{param}-{b} (40 boxes): display-shadow ints, plain patch-cord
+    wiring only, ZERO pattr involvement. CONVERTED this pass.
+  - obj-pv2-hwh-{param}-{b} (40 boxes): hardware-dispatch shadow ints, same
+    plain-int structure as the display shadows, equally safe -- left alone
+    this pass to keep the diff small; a natural next target once this pilot
+    is confirmed.
+
+Used plain subpatchers ("p ..."), not bpatcher: bpatcher's purpose is a live
+embedded UI, which doesn't apply to hidden shadow-int plumbing. Verified the
+exact .maxpat JSON schema against a REAL Max-saved file instead of guessing
+(the sp404mk2_2.0_BusFX_v6.amxd reference upload contains real `p 127 to 100`
+subpatcher boxes) -- confirmed subpatcher content nests directly under the
+box as a "patcher" key, and `inlet`/`outlet` objects carry an explicit
+1-based "index" field for their numbered position (NOT inferred from
+x-coordinate, which was the original assumption before checking).
+
+Result: 832 -> 797 boxes (35 fewer; +8 temporary debug print objects for
+real-Max testing = 805 in the committed file). Outer line count unchanged
+(125 removed, 125 added back) -- purely a box-count/editor-navigability win,
+not a line-count or (necessarily) runtime-performance win. Added a debug aid
+per the user's own feedback on the CC-preset bug ("give me a window to see
+what's happening"): 8 `print` objects tapping Bus1's subpatcher outlets, so
+switching to bus 1 and watching the Max console during testing confirms
+values are flowing correctly. Delete once confirmed.
+
+NOT hardware/Max tested. If confirmed working, next steps in order of
+increasing risk: hwh cluster (safe, same pattern), then bg cluster (real
+risk -- test pattrstorage's 128-preset save/recall thoroughly before and
+after, since that's the one thing this whole approach could silently break).
