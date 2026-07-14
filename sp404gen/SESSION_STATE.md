@@ -1698,3 +1698,40 @@ delay before the hardware actually updates (should be unnoticeable for a
 preset change, unlike per-note timing). If 500ms is audibly too slow or
 still not quite enough, the number in `pipe 500` is the one thing to
 tune.
+
+## Control-44 (fix a regression from Control-43's own fix)
+
+User tested Control-43 and reported a NEW, worse regression: recalling
+bus 1 left the MIDI channel stuck on 5 (not 1), and EFX stopped being
+sent to hardware at all.
+
+Root cause: Control-43's `pipe 500` was inserted directly between the
+hardware-dispatch trigger (obj-pv2-rcl-post-t outlet 2) and dispatch
+itself, delaying ONLY that branch. But outlet 0 (display refresh) fires
+immediately, undelayed, as always. Control-33's own prior fix
+(obj-pv33-busN-t) specifically relies on display refresh running AFTER
+hardware dispatch to restore obj-15 (MIDI channel) back to whichever bus
+is on screen. With hardware dispatch now delayed 500ms behind display
+refresh instead of running before it, display refresh's restoration fired
+and passed long before hardware dispatch even started -- so hardware
+dispatch's own channel loop (1..5) left obj-15 sitting on 5 (the last bus
+it processed) with nothing to restore it afterward.
+
+Fix (build_control44.py): move the delay to sit in front of the ENTIRE
+post-recall sequence (between obj-pv2-rcl-defer and obj-pv2-rcl-post-t)
+instead of just the hardware-dispatch branch, so hardware dispatch and
+display refresh are delayed by the SAME amount and keep their original
+relative order (hardware dispatch still fires before display refresh,
+which still gets the last word on obj-15) -- only the absolute start time
+of the whole post-recall sequence moves later, still giving
+pattrstorage's restore the same head start.
+
+LESSON: when adding a delay to fix an async-timing race, delay the
+shared ENTRY POINT of a multi-branch trigger, not one individual branch
+-- delaying only one branch of a `t` silently inverts its relative
+ordering versus the other (undelayed) branches, which is exactly what
+happened here.
+
+NOT hardware/Max tested yet. To verify: recall bus 1, confirm the MIDI
+channel stays correct (not stuck on 5), AND that EFX applies correctly on
+the first Program Change press.
