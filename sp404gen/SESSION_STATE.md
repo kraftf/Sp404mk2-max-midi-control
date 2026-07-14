@@ -1662,3 +1662,39 @@ test cycle.
 NOT hardware/Max tested yet. To verify: send a single Program Change and
 confirm (a) no console errors, (b) the correct effect applies on the
 first press.
+
+## Control-43 (real fix: hardware dispatch reads a stale EFX value)
+
+Control-41's inlet-ordering fix eliminated the console errors, but the
+underlying "needs two Program Changes" symptom persisted. Control-42's
+diagnostic print (on the actual value being sent to hardware) confirmed
+the real cause: HW-DISPATCH-efx-bus1 printed the PREVIOUS preset's EFX
+value while the on-screen display (read later in the same post-recall
+sequence) already showed the correct new one -- a one-recall-behind lag,
+exactly matching "press twice: first press applies the PREVIOUS recall's
+effect, second press catches up."
+
+Root cause: pattrstorage restores its client objects asynchronously on
+recall (documented Cycling '74 behavior, also confirmed via real forum
+reports of the identical symptom). The existing single `deferlow` between
+"recall N" and the post-recall dispatch sequence is not reliably enough
+time for that restore to finish -- a forum thread with the same symptom
+reported that replacing a deferlow with an explicit `delay 500` in the
+same spot fixed it.
+
+Fix (build_control43.py): insert `pipe 500` (not `delay`, which would
+cancel/restart if a second recall arrives within the window -- `pipe`
+queues each triggering event independently) between the hardware-dispatch
+trigger (obj-pv2-rcl-post-t outlet 2) and the EFX-only dispatch phase,
+giving pattrstorage's restore a real 500ms window before EITHER hardware
+dispatch phase (EFX or the chained 7-param phase) reads the recalled
+values. Applied uniformly to both phases in case dial/toggle parameters
+carry the same latent race, even though only EFX was specifically
+reported as affected.
+
+NOT hardware/Max tested yet. To verify: send a single Program Change and
+confirm the correct effect applies on the first press, with a ~500ms
+delay before the hardware actually updates (should be unnoticeable for a
+preset change, unlike per-note timing). If 500ms is audibly too slow or
+still not quite enough, the number in `pipe 500` is the one thing to
+tune.
