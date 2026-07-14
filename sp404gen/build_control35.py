@@ -82,23 +82,28 @@ Builds Roland_SP404MK2_Control-35.maxpat from Control-34. Three requests:
    connected device is a harmless no-op, which is the correct fallback here.
    Third embedded coll: obj-c35-ccdevice, defaulting every slot to a sentinel
    ('(unset)') that isn't expected to match any real device name.
-   Went through FOUR wrong designs before this one -- see SESSION_STATE.md
-   for all of them: bare-banging obj-c34-indev directly (umenu doesn't
-   respond to bang at all); an unnecessary `value` proxy object with its
-   own bang-to-fetch step; a `route symbol` fix on the RECALL side that
-   assumed (per Cycling '74 forum reports) `coll` always wraps a
-   single-atom symbol value as "symbol <value>" on lookup -- still
-   reported broken in real Max testing after that fix, meaning that
-   assumption about coll's exact single-atom-vs-multi-atom output
-   formatting was wrong, unverifiable, or incomplete.
-   Rather than keep re-guessing at coll's undocumented internal behavior,
-   the design now sidesteps it entirely: `obj-c35-savedev-tag` (`prepend
-   DEV`) tags the device name with a fixed marker atom BEFORE it ever
-   reaches the coll, so every stored value is always >= 2 atoms
-   (['DEV', <name...>]) -- never a single bare atom, so coll's own
-   single-atom formatting quirk (whatever it actually is) never applies.
+   Went through FIVE wrong/incomplete designs before this one -- see
+   SESSION_STATE.md for all of them: bare-banging obj-c34-indev for
+   RECALL (bang can't select an arbitrary item, only re-emit whatever's
+   already selected -- wrong tool for that job); an unnecessary `value`
+   proxy object; a `route symbol` fix on the RECALL side assuming `coll`
+   always wraps a single-atom symbol value on lookup, replaced by a
+   deterministic `prepend DEV` / `route DEV` tagging scheme on the write
+   and read sides so extraction never depends on coll's internal
+   single-atom formatting at all -- and STILL reported broken, because
+   that whole coll-layer investigation was chasing the wrong bug. The
+   real defect was upstream, on SAVE: obj-c34-indev's outlet 1 only fires
+   on an actual user click, so a passive continuous tap into the join's
+   cold inlet captures nothing if the device was already correctly
+   selected when the patch loaded and the user never re-clicks it before
+   pressing SAVE (the normal case). Fixed by explicitly banging
+   obj-c34-indev right before every SAVE (save-t's new outlet 9, firing
+   before the slot-fetch trigger) -- a confirmed Cycling '74 forum idiom:
+   bang forces umenu to re-emit its CURRENTLY selected item on both
+   outlets without changing the selection, guaranteeing a fresh value on
+   every SAVE regardless of whether a change event ever fired.
    On RECALL, `route DEV` (obj-c35-rcl-dev-routesym) deterministically
-   strips the marker back off before `prepend symbol` -> obj-c34-indev
+   strips the write-side tag before `prepend symbol` -> obj-c34-indev
    inlet 0 (umenu's own "symbol" message, confirmed via Cycling '74's
    umenu reference, both selects by matching text and fires real output).
    A name that no longer matches any connected device is a harmless
@@ -303,26 +308,31 @@ add_line('obj-c35-restore-pset', 0, 'obj-c35-ccmenu', 0)
 
 # --- SAVE: capture the 8 ccsel values + the MIDI Control Input Device name
 #     + current slot, synchronously ---
-# t b x9 (right-to-left): outlets 8..1 bang each ccsel box (in CC_TARGETS
-# order, `number` boxes DO document outputting their current value on bang)
-# into savepack's cold inlets; outlet 0 (LAST) bangs the save-shadow,
-# fetching the 0-based index, +1'ing it into BOTH savepack's and
-# savedev-zljoin's HOT inlets -- guaranteeing every cold inlet on both is
-# already filled before either fires. No explicit fetch step is needed for
-# the device name at all: unlike the ccsel `number` boxes (which only
-# report their value when asked), obj-c34-indev's outlet 1 already
-# broadcasts the selected item's text continuously, on every real selection
-# change -- wired directly into savedev-zljoin's cold inlet below, it just
-# sits there, already current, whenever SAVE's hot trigger eventually fires.
-# (An earlier version of this bounced the device name through a `value`
-# proxy object with an extra bang-to-fetch step, entirely unnecessarily --
-# simplified away per the user's own correction.)
+# STILL BROKEN AFTER THE coll/DEV-tag FIX: that fix addressed the RECALL
+# side's extraction, but the real bug was upstream, on SAVE. The previous
+# design relied purely on a PASSIVE continuous tap of obj-c34-indev's
+# outlet 1 into the join's cold inlet -- fine for catching a *change*, but
+# outlet 1 only fires when the user actually clicks a new item. If the
+# device was already correctly selected when the patch loaded (the normal
+# case -- nobody re-clicks a selector that's already right) and the user
+# never touches it before pressing SAVE, outlet 1 never fires even once,
+# so the cold inlet is still empty/stale and nothing meaningful is ever
+# captured. Confirmed via a Cycling '74 forum idiom (bang -> umenu
+# re-outputs its CURRENTLY selected item on both outlets, without changing
+# the selection -- the official doc list omits bang, but this is the
+# standard trick for reading a umenu's current value on demand): outlet 9
+# (NEW, fires FIRST since t is right-to-left) bangs obj-c34-indev directly,
+# forcing a fresh, synchronous re-emission of its current index/text right
+# before the slot-fetch trigger (outlet 0, LAST) reaches the join's hot
+# inlet -- same "capture on demand" pattern already used for the 8 ccsel
+# number boxes below, just applied to the device selector too.
 add_box({'id': 'obj-c35-save-t', 'maxclass': 'newobj',
-         'text': 't b b b b b b b b b',
-         'numinlets': 1, 'numoutlets': 9,
-         'outlettype': ['bang'] * 9,
-         'patching_rect': [5100.0, 5820.0, 140.0, 22.0]})
+         'text': 't b b b b b b b b b b',
+         'numinlets': 1, 'numoutlets': 10,
+         'outlettype': ['bang'] * 10,
+         'patching_rect': [5100.0, 5820.0, 150.0, 22.0]})
 add_line('obj-c35-ccsavebtn', 0, 'obj-c35-save-t', 0)
+add_line('obj-c35-save-t', 9, 'obj-c34-indev', 0)  # FIRST: force fresh re-emission of current device
 
 add_box({'id': 'obj-c35-savepack', 'maxclass': 'newobj',
          'text': 'pack 0 0 0 0 0 0 0 0 0',
@@ -365,7 +375,9 @@ add_line('obj-c35-savepack', 0, 'obj-c35-ccvalues', 0)             # write [slot
 add_box({'id': 'obj-c35-savedev-tag', 'maxclass': 'newobj', 'text': 'prepend DEV',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5300.0, 5880.0, 90.0, 22.0]})
-add_line('obj-c34-indev', 1, 'obj-c35-savedev-tag', 0)                # continuous: device name text
+add_line('obj-c34-indev', 1, 'obj-c35-savedev-tag', 0)                # any real change (belt-and-suspenders;
+                                                                       # save-t outlet 9 above is what actually
+                                                                       # guarantees a fresh value on every SAVE)
 add_box({'id': 'obj-c35-savedev-zljoin', 'maxclass': 'newobj', 'text': 'zl.join',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5300.0, 5910.0, 160.0, 22.0]})

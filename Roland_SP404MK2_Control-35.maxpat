@@ -80617,10 +80617,11 @@
     "box": {
      "id": "obj-c35-save-t",
      "maxclass": "newobj",
-     "text": "t b b b b b b b b b",
+     "text": "t b b b b b b b b b b",
      "numinlets": 1,
-     "numoutlets": 9,
+     "numoutlets": 10,
      "outlettype": [
+      "bang",
       "bang",
       "bang",
       "bang",
@@ -80634,7 +80635,7 @@
      "patching_rect": [
       5100.0,
       5820.0,
-      140.0,
+      150.0,
       22.0
      ]
     }
@@ -96401,6 +96402,18 @@
      ],
      "destination": [
       "obj-c35-save-t",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-c35-save-t",
+      9
+     ],
+     "destination": [
+      "obj-c34-indev",
       0
      ]
     }

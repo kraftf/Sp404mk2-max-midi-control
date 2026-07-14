@@ -131,11 +131,14 @@ check(outgoing('obj-c35-ccnameedit', 0) == [('obj-c35-ccroute-text', 0)],
       'ccnameedit not routed through route text')
 
 # --- SAVE chain: outlets 8..1 (right-to-left) hit ccsel boxes in
-#     CC_TARGETS order, feeding savepack cold inlets 8..1; outlet0 (last)
-#     fetches slot via shadow+1 into savepack's hot inlet 0 ---
+#     CC_TARGETS order, feeding savepack cold inlets 8..1; outlet 9 (fires
+#     FIRST) bangs obj-c34-indev to force a fresh device readout; outlet0
+#     (last) fetches slot via shadow+1 into savepack's hot inlet 0 ---
 save_t = box_by_id['obj-c35-save-t']
-check(save_t['text'] == 't b b b b b b b b b', 'obj-c35-save-t wrong text/outlet count (should be 9)')
+check(save_t['text'] == 't b b b b b b b b b b', 'obj-c35-save-t wrong text/outlet count (should be 10)')
 check(outgoing('obj-c35-ccsavebtn', 0) == [('obj-c35-save-t', 0)], 'SAVE button not wired to save-t')
+check(('obj-c34-indev', 0) in outgoing('obj-c35-save-t', 9),
+      'save-t outlet 9 should bang obj-c34-indev to force a fresh device readout before SAVE')
 for i, name in enumerate(CC_TARGETS):
     out_index = i + 1
     pack_inlet = i + 1
@@ -158,11 +161,11 @@ check(outgoing('obj-c35-savepack', 0) == [('obj-c35-ccvalues', 0)],
 #     since the coll for a lookup-by-name recall needs zl.join (not pack)
 #     for the identical multi-atom-spillover reason as the rename fix.
 #
-#     No fetch mechanism needed at all (no bang into umenu -- undocumented
-#     and confirmed not to work; no `value` proxy either -- unnecessary):
-#     obj-c34-indev's outlet 1 already broadcasts the selected text
-#     continuously on every real change, wired straight into the cold
-#     inlet, already current whenever the hot (slot) trigger fires. ---
+#     A passive continuous tap of outlet 1 alone is NOT sufficient (it only
+#     fires on an actual user click, so a device already correctly selected
+#     at load time is never captured) -- save-t outlet 9 explicitly bangs
+#     obj-c34-indev right before every SAVE to force a fresh re-emission
+#     of its current selection, confirmed via a Cycling '74 forum idiom. ---
 check('obj-c35-indevname-value' not in box_by_id,
       'obj-c35-indevname-value should have been removed -- unnecessary indirection')
 check(('obj-c35-savedev-tag', 0) in outgoing('obj-c34-indev', 1),
