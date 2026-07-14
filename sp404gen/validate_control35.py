@@ -165,8 +165,12 @@ check(outgoing('obj-c35-savepack', 0) == [('obj-c35-ccvalues', 0)],
 #     inlet, already current whenever the hot (slot) trigger fires. ---
 check('obj-c35-indevname-value' not in box_by_id,
       'obj-c35-indevname-value should have been removed -- unnecessary indirection')
-check(('obj-c35-savedev-zljoin', 1) in outgoing('obj-c34-indev', 1),
-      'obj-c34-indev outlet1 (device name text) should continuously feed savedev-zljoin cold inlet directly')
+check(('obj-c35-savedev-tag', 0) in outgoing('obj-c34-indev', 1),
+      'obj-c34-indev outlet1 (device name text) should continuously feed savedev-tag (prepend DEV)')
+check(box_by_id['obj-c35-savedev-tag']['text'] == 'prepend DEV',
+      'obj-c35-savedev-tag wrong text')
+check(outgoing('obj-c35-savedev-tag', 0) == [('obj-c35-savedev-zljoin', 1)],
+      'savedev-tag output should feed savedev-zljoin cold inlet')
 check(outgoing('obj-c35-savedev-zljoin', 0) == [('obj-c35-ccdevice', 0)],
       'savedev-zljoin output should write into obj-c35-ccdevice')
 
@@ -177,7 +181,7 @@ check(cd3['count'] == N_CC_SLOTS, 'obj-c35-ccdevice count wrong')
 keys3 = sorted(e['key'] for e in cd3['data'])
 check(keys3 == list(range(1, N_CC_SLOTS + 1)), 'obj-c35-ccdevice keys not exactly 1..16')
 for e in cd3['data']:
-    check(e['value'] == ['(unset)'], f'obj-c35-ccdevice[{e["key"]}] default value wrong: {e["value"]}')
+    check(e['value'] == ['DEV', '(unset)'], f'obj-c35-ccdevice[{e["key"]}] default value wrong: {e["value"]}')
 
 # --- RECALL chain: unpack outlet i -> ccsel(CC_TARGETS[i]).
 #     This must be the SAME index i as SAVE's pack_inlet = i + 1 above --
@@ -206,16 +210,16 @@ for i, name in enumerate(CC_TARGETS):
           f'rcl-unpack outlet {i} should dispatch to {ccsel_id}')
 
 # --- RECALL also re-selects the saved MIDI Control Input Device by name.
-#     `route symbol` strips coll's single-atom "symbol <value>" wrapping
-#     (the same bug already fixed for the 128-preset name cache) -- every
-#     entry here hits it unconditionally since umenu's outlet 1 sends the
-#     whole selected text as ONE atom regardless of word count. Without
-#     this, RECALL sends "symbol symbol <name>" (double-wrapped) and
-#     matches nothing. ---
+#     `route DEV` strips the fixed marker atom that the write side
+#     (savedev-tag, `prepend DEV`) always tags the stored value with, so
+#     every ccdevice entry is deterministically >= 2 atoms and extraction
+#     doesn't depend on guessing coll's single-atom output formatting (the
+#     previous `route symbol`-based fix for that guess was still reported
+#     broken in real Max testing). ---
 check(outgoing('obj-c35-ccdevice', 0) == [('obj-c35-rcl-dev-routesym', 0)],
-      'ccdevice lookup output should feed rcl-dev-routesym (symbol-wrapping strip)')
+      'ccdevice lookup output should feed rcl-dev-routesym (DEV-tag strip)')
 routesym = box_by_id['obj-c35-rcl-dev-routesym']
-check(routesym['text'] == 'route symbol', 'obj-c35-rcl-dev-routesym wrong text')
+check(routesym['text'] == 'route DEV', 'obj-c35-rcl-dev-routesym wrong text')
 check(sorted(outgoing('obj-c35-rcl-dev-routesym', 0) + outgoing('obj-c35-rcl-dev-routesym', 1)) ==
       sorted([('obj-c35-rcl-dev-prepend', 0), ('obj-c35-rcl-dev-prepend', 0)]),
       'rcl-dev-routesym both outlets (matched + reject) should feed rcl-dev-prepend')

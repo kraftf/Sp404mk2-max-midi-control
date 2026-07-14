@@ -82,23 +82,27 @@ Builds Roland_SP404MK2_Control-35.maxpat from Control-34. Three requests:
    connected device is a harmless no-op, which is the correct fallback here.
    Third embedded coll: obj-c35-ccdevice, defaulting every slot to a sentinel
    ('(unset)') that isn't expected to match any real device name.
-   Went through three wrong designs before this one -- see SESSION_STATE.md
+   Went through FOUR wrong designs before this one -- see SESSION_STATE.md
    for all of them: bare-banging obj-c34-indev directly (umenu doesn't
    respond to bang at all); an unnecessary `value` proxy object with its
-   own bang-to-fetch step (obj-c34-indev's outlet 1 already broadcasts the
-   selected text continuously on every real change, so it's wired straight
-   into obj-c35-savedev-zljoin's cold inlet with no intermediate object at
-   all); and, still not enough -- missed that `coll` wraps a single-atom
-   stored value as "symbol <value>" when reported back on lookup (the exact
-   bug already fixed for the 128-preset name cache), which every entry in
-   obj-c35-ccdevice hits unconditionally since umenu's outlet 1 sends the
-   whole selected text as ONE atom regardless of word count. `route symbol`
-   (obj-c35-rcl-dev-routesym) now strips that on the RECALL side, right
-   after the coll lookup and before `prepend symbol` -- without it, RECALL
-   was sending "symbol symbol <name>" (double-wrapped) into obj-c34-indev,
-   which matches nothing. Not needed on the SAVE/write side: the device
-   name there comes straight from umenu's own output, never through a coll
-   first, so there's no wrapping to strip before it's written.
+   own bang-to-fetch step; a `route symbol` fix on the RECALL side that
+   assumed (per Cycling '74 forum reports) `coll` always wraps a
+   single-atom symbol value as "symbol <value>" on lookup -- still
+   reported broken in real Max testing after that fix, meaning that
+   assumption about coll's exact single-atom-vs-multi-atom output
+   formatting was wrong, unverifiable, or incomplete.
+   Rather than keep re-guessing at coll's undocumented internal behavior,
+   the design now sidesteps it entirely: `obj-c35-savedev-tag` (`prepend
+   DEV`) tags the device name with a fixed marker atom BEFORE it ever
+   reaches the coll, so every stored value is always >= 2 atoms
+   (['DEV', <name...>]) -- never a single bare atom, so coll's own
+   single-atom formatting quirk (whatever it actually is) never applies.
+   On RECALL, `route DEV` (obj-c35-rcl-dev-routesym) deterministically
+   strips the marker back off before `prepend symbol` -> obj-c34-indev
+   inlet 0 (umenu's own "symbol" message, confirmed via Cycling '74's
+   umenu reference, both selects by matching text and fires real output).
+   A name that no longer matches any connected device is a harmless
+   no-op, which is the correct fallback for a stale/renamed port.
 
 6. Program Change Input Device selector (added in this same build, item 1)
    repositioned in presentation to sit next to the bus-state preset
@@ -268,7 +272,11 @@ add_box({'id': 'obj-c35-ccdevice', 'maxclass': 'newobj',
          'patching_rect': [5540.0, 5700.0, 200.0, 22.0],
          'coll_data': {
              'count': N_CC_SLOTS,
-             'data': [{'key': n, 'value': [DEVICE_UNSET]}
+             # every stored value is tagged ['DEV', <name...>] -- see the
+             # write/read sites below for why (deterministic multi-atom
+             # values, sidestepping coll's single-atom "symbol"-wrap quirk
+             # entirely instead of trying to detect/undo it after the fact).
+             'data': [{'key': n, 'value': ['DEV', DEVICE_UNSET]}
                       for n in range(1, N_CC_SLOTS + 1)],
          }})
 
@@ -345,12 +353,25 @@ add_line('obj-c35-savepack', 0, 'obj-c35-ccvalues', 0)             # write [slot
 # multi-atom message into subsequent inlets -- the exact bug already found
 # and fixed in the rename mechanism. Uses zl.join instead, which has no
 # per-inlet atom-count limit either way.
+#
+# `prepend DEV` tags the device name with a fixed marker atom BEFORE it
+# ever reaches the coll, so the value written is always >= 2 atoms
+# (['DEV', <name...>]), never a single bare atom. This sidesteps needing
+# to know exactly when `coll` does or doesn't wrap a single-atom symbol
+# value on the way back out -- a corner case that went through multiple
+# wrong fixes this session and still didn't resolve the reported bug. With
+# a self-supplied tag, extraction on RECALL is a plain, deterministic
+# `route DEV` instead of guessing at coll's internal behavior.
+add_box({'id': 'obj-c35-savedev-tag', 'maxclass': 'newobj', 'text': 'prepend DEV',
+         'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
+         'patching_rect': [5300.0, 5880.0, 90.0, 22.0]})
+add_line('obj-c34-indev', 1, 'obj-c35-savedev-tag', 0)                # continuous: device name text
 add_box({'id': 'obj-c35-savedev-zljoin', 'maxclass': 'newobj', 'text': 'zl.join',
          'numinlets': 2, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5300.0, 5910.0, 160.0, 22.0]})
-add_line('obj-c34-indev', 1, 'obj-c35-savedev-zljoin', 1)             # cold: device name text (NEW tap, continuous)
+add_line('obj-c35-savedev-tag', 0, 'obj-c35-savedev-zljoin', 1)       # cold: ['DEV', name...]
 add_line('obj-c35-save-slotplus1', 0, 'obj-c35-savedev-zljoin', 0)    # HOT: triggers join (same slot as savepack)
-add_line('obj-c35-savedev-zljoin', 0, 'obj-c35-ccdevice', 0)          # write [slot device-name...]
+add_line('obj-c35-savedev-zljoin', 0, 'obj-c35-ccdevice', 0)          # write [slot DEV device-name...]
 
 # --- RECALL: fetch slot, look up values, dispatch to the 8 ccsel boxes ---
 # obj-c35-ccrclbtn outputs the literal symbol "RECALL", which int objects do
@@ -385,30 +406,31 @@ for i, name in enumerate(CC_TARGETS):
 # from the same slot value already computed above, an independent read
 # with no ordering dependency on the ccvalues lookup.
 #
-# MISSED THE FIRST TWO TIMES: `coll` wraps a single-atom stored value as
-# "symbol <value>" when reported back (the exact bug already fixed for the
-# 128-preset name cache -- obj-c34-rebuild-routesym). umenu's outlet 1
-# sends the selected item's full text as ONE atom regardless of how many
-# words it visually contains (confirmed by re-reading this patch's own
-# obj-4 items list: each device name is one JSON string, one atom), so
-# EVERY entry in obj-c35-ccdevice is single-atom and unconditionally hits
-# this wrapping on lookup. Without stripping it, RECALL was sending
-# "prepend symbol" onto an ALREADY-wrapped "symbol <name>", i.e. literally
-# "symbol symbol <name>" into obj-c34-indev -- which matches no real menu
-# item, so RECALL silently did nothing. `route symbol` strips it if
-# present; its reject outlet passes anything else through unchanged (same
-# both-outlets-to-one-destination idiom used for namecache), so this is
-# safe regardless of atom count.
-add_line('obj-c35-rcl-slotplus1', 0, 'obj-c35-ccdevice', 0)  # lookup -> outlet0: device name
-add_box({'id': 'obj-c35-rcl-dev-routesym', 'maxclass': 'newobj', 'text': 'route symbol',
+# THIRD ATTEMPT AT THIS, STILL REPORTED BROKEN IN REAL MAX TESTING: the
+# previous fix here assumed `coll` always wraps a single-atom symbol value
+# as "symbol <value>" on lookup, and used `route symbol` to strip that.
+# That still didn't work. Rather than keep re-guessing at coll's exact
+# undocumented single-atom-vs-multi-atom output formatting (two rounds of
+# "confirmed via docs" reasoning both failed in practice), the write side
+# above now tags every stored value with a fixed marker atom ('DEV')
+# BEFORE it ever reaches the coll, so the stored value is always >= 2
+# atoms and its lookup output format is no longer ambiguous either way.
+# Extraction here is just `route DEV`: matched outlet strips the marker,
+# leaving exactly the device-name atoms, deterministically -- no guessing
+# required about how coll would otherwise format a single-atom value.
+# Reject outlet (shouldn't fire in normal operation, since every entry --
+# default or saved -- always carries the tag now) passes anything
+# untagged through unchanged, as a defensive fallback only.
+add_line('obj-c35-rcl-slotplus1', 0, 'obj-c35-ccdevice', 0)  # lookup -> outlet0: [DEV, name...]
+add_box({'id': 'obj-c35-rcl-dev-routesym', 'maxclass': 'newobj', 'text': 'route DEV',
          'numinlets': 2, 'numoutlets': 2, 'outlettype': ['', ''],
          'patching_rect': [5300.0, 5980.0, 90.0, 22.0]})
 add_line('obj-c35-ccdevice', 0, 'obj-c35-rcl-dev-routesym', 0)
 add_box({'id': 'obj-c35-rcl-dev-prepend', 'maxclass': 'newobj', 'text': 'prepend symbol',
          'numinlets': 1, 'numoutlets': 1, 'outlettype': [''],
          'patching_rect': [5400.0, 6010.0, 100.0, 22.0]})
-add_line('obj-c35-rcl-dev-routesym', 0, 'obj-c35-rcl-dev-prepend', 0)  # matched: stripped name
-add_line('obj-c35-rcl-dev-routesym', 1, 'obj-c35-rcl-dev-prepend', 0)  # reject: unchanged (already bare)
+add_line('obj-c35-rcl-dev-routesym', 0, 'obj-c35-rcl-dev-prepend', 0)  # matched: tag stripped, bare name
+add_line('obj-c35-rcl-dev-routesym', 1, 'obj-c35-rcl-dev-prepend', 0)  # reject: unchanged (untagged fallback)
 add_line('obj-c35-rcl-dev-prepend', 0, 'obj-c34-indev', 0)  # select by name (fires real output too)
 
 # --- RENAME: write into ccnames directly (synchronous, no external
