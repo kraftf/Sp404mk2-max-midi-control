@@ -1518,3 +1518,42 @@ NOT hardware/Max tested. If confirmed working, next steps in order of
 increasing risk: hwh cluster (safe, same pattern), then bg cluster (real
 risk -- test pattrstorage's 128-preset save/recall thoroughly before and
 after, since that's the one thing this whole approach could silently break).
+
+## Control-37 (fix: main-preset rename only worked for slots 1-4)
+
+User tested Control-36 and reported: "there is a bug from the previous
+version continued to this one. Renaming the presets only works for the
+first 4 presets." Clarified via AskUserQuestion: the MAIN preset system
+(128 slots), and presets 5+ silently do nothing to the name (not garbled,
+not applied to the wrong slot).
+
+Root cause: pattrstorage's `getslotnamelist` only reports slots that have
+actually been STORED to at least once (already documented in this file's
+own build_control34.py comments, confirmed by this session's earlier real
+testing -- the old getslotnamelist-driven menu design got "stuck at
+PC10"). obj-c34-namecache (the local display cache) is populated ONLY from
+that reply stream, and the visible menu is rebuilt FROM namecache, not
+from pattrstorage directly. So renaming a never-stored slot silently sent
+pattrstorage a correct "slotname N name" message, but our own cache (and
+therefore the display) never learned about it. Whichever slots the user
+happened to SAVE first (apparently 1-4) were the only ones whose renames
+were ever visible.
+
+Fix (build_control37.py): write the typed name into obj-c34-namecache
+directly and synchronously at rename time, alongside (not instead of) the
+existing pattrstorage "slotname" message -- same self-contained approach
+the CC-config preset system already uses successfully, so the display no
+longer depends on pattrstorage's reporting behavior at all.
+
+Also fixed in the same pass: obj-c34-namepack was still `pack s i` -- the
+same multi-word-name-clobbers-slot-number bug already found and fixed in
+the CC-config rename mechanism, but never back-ported here (this was an
+open question from earlier in the session, now confirmed and fixed).
+Replaced with `zl.join`; output order unchanged ([name, slot], hot-first/
+cold-second), so the downstream "slotname $2 $1" message box needed no
+changes.
+
+NOT hardware/Max tested. To verify: rename a preset slot that has NEVER
+been saved to (e.g. a high-numbered one you haven't touched), confirm the
+new name shows up in the menu immediately; also test a 2+ word name on
+any slot to confirm the pack-spillover class of bug is gone too.
