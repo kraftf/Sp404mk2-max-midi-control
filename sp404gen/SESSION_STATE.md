@@ -1557,3 +1557,35 @@ NOT hardware/Max tested. To verify: rename a preset slot that has NEVER
 been saved to (e.g. a high-numbered one you haven't touched), confirm the
 new name shows up in the menu immediately; also test a 2+ word name on
 any slot to confirm the pack-spillover class of bug is gone too.
+
+## Control-38 (subpatcher pass 2: hardware-dispatch shadow cluster)
+
+Second, equally-low-risk pass of the box-count reduction started in
+Control-36 (confirmed working in real Max by the user). Converts
+obj-pv2-hwh-{param}-{b} (40 boxes: plain `int 0` objects that hold each
+bus's value for post-recall MIDI hardware dispatch, bypassing the UI) into
+5 per-bus subpatchers, same pattern as Control-36's display-shadow cluster
+-- zero pattr/parameter_enable involvement, ordinary patch-cord wiring
+only.
+
+One structural difference from Control-36: the hot trigger here
+(obj-pv2-hw-bussel, a single shared `select 1 2 3 4 5`) fires to ALL 8
+params of a bus from ONE outlet, unlike the display-shadow cluster where
+each param had its own per-param select object. So each subpatcher here
+has 9 inlets (8 bg-value cold taps + 1 shared hot-trigger, fanned out
+internally via a `t b b b b b b b b`) and 8 outlets, vs. 16 inlets there.
+
+Result: 807 -> 772 boxes (35 fewer, matching Control-36's exact box-count
+delta for the same reason: 40 removed, 5 subpatchers added).
+
+NOT hardware/Max tested yet. To verify: RECALL a preset while on a
+DIFFERENT bus than the one being recalled into, and confirm the hardware
+still receives correct MIDI CC values for buses not currently on screen
+(this is what obj-pv2-hwh exists for -- dispatch shouldn't depend on which
+bus is visually selected).
+
+Remaining cluster for a possible future pass: obj-pv2-bg-b{bus}-{param}
+(the actual pattr clients, 40 boxes) -- HIGH RISK, deferred until asked
+for explicitly, since it's the one thing that could silently break the
+hard-won 128-preset pattrstorage system (subscribemode auto-discovery
+inside a nested subpatcher is unverified).
