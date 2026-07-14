@@ -1589,3 +1589,38 @@ Remaining cluster for a possible future pass: obj-pv2-bg-b{bus}-{param}
 for explicitly, since it's the one thing that could silently break the
 hard-won 128-preset pattrstorage system (subscribemode auto-discovery
 inside a nested subpatcher is unverified).
+
+## Control-39 (fix: PC recall needed pressing twice for EFX to apply)
+
+User tested Control-38 and reported: recalling via the SAVE/RECALL UI
+buttons on a different bus worked correctly (confirmed), but recalling via
+incoming Program Change needed the PC message sent TWICE for the right
+effect to be selected -- the first PC dispatched dial/CC values correctly
+but not EFX-select, so those values landed on whatever effect was
+previously active; the second PC (now also re-sending the already-correct
+EFX) produced the right result. User's own diagnosis, confirmed correct
+after tracing: "EFX select should be sent first of all for all busses."
+
+Root cause: pre-existing since Control-32 (NOT introduced by the Control-36/
+38 subpatcher passes -- those preserved the exact same per-bus dispatch
+order, just relocated the objects). The post-recall hardware-dispatch loop
+(obj-pv2-hw-uzi/hw-bussel) iterates bus-by-bus, dispatching ALL 8 params
+(EFX bundled with the 6 CC dials + on/off toggle) together per bus before
+moving to the next. A real effects unit needs its active effect selected
+before per-effect parameter CCs are meaningful; bundling EFX in with the
+dial values per-bus doesn't guarantee EFX lands first, globally, across all
+5 buses, before any dial value does.
+
+Fix (build_control39.py): split hardware dispatch into two sequential
+passes across all 5 buses -- a NEW EFX-only uzi5/select-1-2-3-4-5 loop
+(obj-pv39-hw-efx-*) runs to full completion first, THEN the existing
+7-param (dials + toggle) hw-uzi loop runs, chained via uzi's own
+completion bang (same idiom used elsewhere in this codebase for phase
+sequencing). Each bus's Control-38 subpatcher gained a 10th, dedicated
+inlet (index 10) wired straight to that bus's EFX int object, replacing
+its previous connection through the shared 7-param trigger-fan.
+
+NOT hardware/Max tested yet. To verify: send a single Program Change from
+an external controller and confirm the correct effect AND correct
+parameter values both apply on the FIRST press, no longer needing a
+second press.
